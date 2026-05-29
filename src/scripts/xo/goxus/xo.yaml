@@ -1,0 +1,16 @@
+config:
+  db:
+    host: 127.0.0.1
+    port: 5432
+    name: goxus
+    user: goxus
+    pass: 12345
+    sslmode: disable
+    pool_max_conns: 10
+    backups:
+      path: ./backups/production/
+  codegen:
+    path: ../../../internal/pkg/db/goxus/
+    package: goxus
+    queries: ./sql/query/
+    templates: ./sql/templates/

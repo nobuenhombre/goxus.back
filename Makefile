@@ -1,0 +1,26 @@
+PROJECT_NAME=goxus
+
+export GOPROXY := https://proxy.golang.org,direct
+export GOSUMDB := off
+
+#===========================================
+# команды makefile -
+# если команда совпадет с названием каталога
+#===========================================
+.PHONY: help deps wire
+
+help: Makefile
+	@echo "Выберите опцию сборки:"
+	@sed -n 's/^##//p' $< | column -s ':' |  sed -e 's/^/ /'
+
+## deps: Инициализация модулей, скачать все необходимые программе модули
+deps:
+	rm -f go.mod
+	rm -f go.sum
+	go mod init $(PROJECT_NAME)
+	go get -u ./...
+
+## wire: Генерация wire_gen.go через Google Wire
+wire:
+	wire ./src/...
+	gofmt -w src/cmd/*/wire_gen.go

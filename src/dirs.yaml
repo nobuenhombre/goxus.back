@@ -1,0 +1,14 @@
+directories:
+    - path: src/internal/pkg/db/goxus
+      with_git_keep: true
+    - path: src/scripts/xo/goxus/backups
+    - path: src/scripts/xo/goxus/backups/local
+    - path: src/scripts/xo/goxus/backups/production
+    - path: src/scripts/xo/goxus/migrations
+    - path: src/scripts/xo/goxus/sql
+    - path: src/scripts/xo/goxus/sql/query
+    - path: src/scripts/xo/goxus/sql/query/many
+    - path: src/scripts/xo/goxus/sql/query/one
+    - path: src/scripts/xo/goxus/sql/query/uid
+    - path: src/scripts/xo/goxus/sql/query/routines
+    - path: src/scripts/xo/goxus/sql/query/views

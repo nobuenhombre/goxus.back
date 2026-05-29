@@ -1,0 +1,10 @@
+[Unit]
+Description=api_goxus
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/goxus/configs/
+ExecStart=/usr/local/bin/goxus -runtype=service -config=/opt/goxus/configs/production/config.yaml -log=/var/log/goxus/api.log
+
+[Install]
+WantedBy=multy-user.target

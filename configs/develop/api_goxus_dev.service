@@ -1,0 +1,10 @@
+[Unit]
+Description=api_goxus_dev
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/goxus.dev/configs/
+ExecStart=/usr/local/bin/goxus-dev -runtype=service -config=/opt/goxus.dev/configs/develop/config.yaml -log=/var/log/goxus/api.dev.log
+
+[Install]
+WantedBy=multy-user.target
