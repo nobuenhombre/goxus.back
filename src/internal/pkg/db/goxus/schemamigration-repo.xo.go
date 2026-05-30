@@ -1,0 +1,50 @@
+// Code generated from schemamigration.xo-xouid.go. DO NOT EDIT.
+package goxus
+
+import (
+	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
+)
+
+// ISchemaMigrationRepository defines the repository interface
+type ISchemaMigrationRepository interface {
+	Save(sm *SchemaMigration) error
+	Delete(sm *SchemaMigration) error
+	GetAll() ([]*SchemaMigration, error)
+	GetLastID() (*SchemaMigration, error)
+	GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error)
+}
+
+// Save saves the SchemaMigration to the database.
+func (repo *SchemaMigrationRepository) Save(sm *SchemaMigration) error {
+	return sm.Save(repo.db)
+}
+
+// Delete deletes the SchemaMigration from the database.
+func (repo *SchemaMigrationRepository) Delete(sm *SchemaMigration) error {
+	return sm.Delete(repo.db)
+}
+
+// SchemaMigrationRepository реализует работу с таблицей 'schema_migrations'.
+type SchemaMigrationRepository struct {
+	db pgxdb.DBQuery
+}
+
+// NewSchemaMigrationRepository создает новый репозиторий.
+func NewSchemaMigrationRepository(db pgxdb.DBQuery) *SchemaMigrationRepository {
+	return &SchemaMigrationRepository{db: db}
+}
+
+// GetAll возвращает все записи
+func (repo *SchemaMigrationRepository) GetAll() ([]*SchemaMigration, error) {
+	return GetAllSchemaMigration(repo.db)
+}
+
+// GetLastID возвращает последний ID
+func (repo *SchemaMigrationRepository) GetLastID() (*SchemaMigration, error) {
+	return GetLastIDSchemaMigration(repo.db)
+}
+
+// GetSchemaMigrationByVersion возвращает одну запись по индексу 'schema_migrations_pkey'.
+func (repo *SchemaMigrationRepository) GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error) {
+	return GetSchemaMigrationByVersion(repo.db, version)
+}
