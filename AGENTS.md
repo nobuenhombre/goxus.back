@@ -192,8 +192,46 @@ make upgrade             # stop -> build-app-progress -> start -> status
 - **Secondary Makefile:** The root `Makefile` is minimal (wire + deps). Full build/deploy is in `service/deployments/goxus/linux/Makefile`.
 - **xo generated code:** `src/internal/pkg/db/goxus/xo_db.xo.go` is auto-generated — do not edit by hand. Regenerate via `src/scripts/xo/xo.sh <yaml-file>`.
 
-## Deployment
+## Required Skills (load on every session)
 
+При работе с этим проектом **обязательно загружай** следующие скиллы через `skill_view(name)`:
+
+### Go code style (goxus conventions)
+
+| Skill | Description | When |
+|---|---|---|
+| `go-write-code` | Umbrella: loads all 5 sub-skills below | Every Go file edit/write |
+| `go-write-code/go-ge-pin-error` | Wrap every returned error with `ge.Pin(err)` | Error handling |
+| `go-write-code/go-file-structure` | Strict order of top-level declarations in Go files | Every Go file write |
+| `go-write-code/go-new-expr` | Use Go 1.26 `new(expr)` for pointer initialization | Pointer init |
+| `go-write-code/go-no-init-in-if` | Never use variable initialization inside `if` statements | Control flow |
+| `go-write-code/go-1.25-1.26` | Go 1.25–1.26 language changes and new stdlib APIs | Using newer syntax |
+
+### DI & architecture
+
+| Skill | Description | When |
+|---|---|---|
+| `go-wire-di` | Google Wire DI best practices: ProviderSet, cleanup, anti-patterns | Wire config changes |
+| `go-domain-service-orchestrator` | DomainService as true orchestrator, encapsulate domain services | Adding domain services |
+| `go-service-utility-separation` | Services in `internal/pkg/services/` with Wire vs utility packages without | New package creation |
+| `go-rest-api-versioning` | REST API versioning in Go/Gin with DDD structure | New API routes |
+
+### Testing
+
+| Skill | Description | When |
+|---|---|---|
+| `go-testing` | Table-driven tests, testify, gomock, coverage, race detector | Writing tests |
+
+### Project infrastructure
+
+| Skill | Description | When |
+|---|---|---|
+| `go-project-setup` | Standard Go project layout: internal/, cmd/, pkg/, Makefile | Project structure decisions |
+| `go-versioning` | Single source of truth, SemVer, ldflags injection, build-time stamping | Version bumps, health endpoint |
+| `go-docker` | Multi-stage Docker builds for Go: distroless, scratch | Docker/deployment changes |
+| `go-grpc` | gRPC services in Go: protobuf, interceptors, streaming | Adding gRPC endpoints (future) |
+
+## Deployment
 - Binary: statically linked linux/amd64, installed to `/usr/local/bin/goxus`
 - systemd service: `configs/{local,develop,production}/api_goxus*.service`
 - Logs: `/var/log/goxus/api.log` (api_goxus.service configures `-log=/var/log/goxus/api.log`)

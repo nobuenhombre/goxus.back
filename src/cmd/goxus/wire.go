@@ -10,7 +10,10 @@ import (
 	configapp "goxus/src/internal/app/goxus/config"
 	examplejobs "goxus/src/internal/app/goxus/cron-job/jobs/example"
 	domainapp "goxus/src/internal/app/goxus/domain"
+	userdomain "goxus/src/internal/app/goxus/domain/user"
 	logfile "goxus/src/internal/app/goxus/log"
+	"goxus/src/internal/pkg/db/goxus"
+	"goxus/src/internal/pkg/services/rbac"
 )
 
 // initializeApp is the Wire injector entrypoint. It aggregates all ProviderSets
@@ -20,6 +23,9 @@ func initializeApp() (IApp, func(), error) {
 		cli.ProviderSet,
 		logfile.ProviderSet,
 		configapp.ProviderSet,
+		goxus.ProviderSet,
+		rbac.ProviderSet,
+		userdomain.ProviderSet,
 		domainapp.ProviderSet,
 		examplejobs.ProviderSet,
 		server.ProviderSet,

@@ -8,9 +8,14 @@ import (
 )
 
 type DbGoxusRepo struct {
-	db              pgxdb.DBQuery
-	SchemaMigration ISchemaMigrationRepository
-	User            IUserRepository
+	db                 pgxdb.DBQuery
+	RbacPermission     IRbacPermissionRepository
+	RbacRole           IRbacRoleRepository
+	RbacRolePermission IRbacRolePermissionRepository
+	RbacUserRole       IRbacUserRoleRepository
+	SchemaMigration    ISchemaMigrationRepository
+	User               IUserRepository
+	UsersToken         IUsersTokenRepository
 }
 
 func NewDbGoxusRepository(config *pgxdb.Config, log types.SQLLoggerFunc) (*DbGoxusRepo, error) {
@@ -20,9 +25,14 @@ func NewDbGoxusRepository(config *pgxdb.Config, log types.SQLLoggerFunc) (*DbGox
 	}
 
 	return &DbGoxusRepo{
-		db:              db,
-		SchemaMigration: NewSchemaMigrationRepository(db),
-		User:            NewUserRepository(db),
+		db:                 db,
+		RbacPermission:     NewRbacPermissionRepository(db),
+		RbacRole:           NewRbacRoleRepository(db),
+		RbacRolePermission: NewRbacRolePermissionRepository(db),
+		RbacUserRole:       NewRbacUserRoleRepository(db),
+		SchemaMigration:    NewSchemaMigrationRepository(db),
+		User:               NewUserRepository(db),
+		UsersToken:         NewUsersTokenRepository(db),
 	}, nil
 }
 

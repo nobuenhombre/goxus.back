@@ -1,11 +1,13 @@
 package configapp
 
 import (
+	configserver "goxus/src/internal/app/goxus/api/server/config"
+	configcron "goxus/src/internal/app/goxus/cron-job/config"
+
+	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
 	"github.com/nobuenhombre/suikat/pkg/fico"
 	"github.com/nobuenhombre/suikat/pkg/ge"
 	"gopkg.in/yaml.v3"
-	configserver "goxus/src/internal/app/goxus/api/server/config"
-	configcron "goxus/src/internal/app/goxus/cron-job/config"
 )
 
 type Service interface {
@@ -19,6 +21,7 @@ type HostsConfig struct {
 }
 
 type Config struct {
+	DB    pgxdb.Config          `yaml:"db,omitempty"`
 	Hosts HostsConfig           `yaml:"hosts,omitempty"`
 	Cron  configcron.CronConfig `yaml:"cron,omitempty"`
 }

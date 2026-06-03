@@ -11,7 +11,7 @@ import (
 
 // waitOSInterruptSignal blocks until SIGINT or SIGTERM is received.
 func (srv *HTTPServer) waitOSInterruptSignal() {
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutdown Server ...")

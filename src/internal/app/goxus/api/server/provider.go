@@ -22,8 +22,7 @@ func ProvideAPI(configApp configapp.Service, lf logfile.ILogFile, dom domainapp.
 		log.Println("API cleanup")
 	}
 
-	cfg := configApp.Get().Hosts.API
-	srv, err := NewHTTPServer(&cfg, lf.Get(), dom)
+	srv, err := NewHTTPServer(new(configApp.Get().Hosts.API), lf.Get(), dom)
 	if err != nil {
 		return nil, cleanup, ge.Pin(err)
 	}

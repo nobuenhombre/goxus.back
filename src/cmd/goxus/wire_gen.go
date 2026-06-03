@@ -12,7 +12,10 @@ import (
 	"goxus/src/internal/app/goxus/config"
 	"goxus/src/internal/app/goxus/cron-job/jobs/example"
 	"goxus/src/internal/app/goxus/domain"
+	"goxus/src/internal/app/goxus/domain/user"
 	"goxus/src/internal/app/goxus/log"
+	"goxus/src/internal/pkg/db/goxus"
+	"goxus/src/internal/pkg/services/rbac"
 )
 
 // Injectors from wire.go:
@@ -29,20 +32,26 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	domainService, cleanup3, err := domainapp.ProvideDomain(service, configappService)
+	config, err := configapp.ProvideDBConfig(configappService)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	iLogFile, cleanup4, err := logfile.ProvideLogFile(service)
+	sqlLoggerFunc, cleanup3, err := logfile.ProvideSQLLogger()
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	dbGoxusRepo, cleanup4, err := goxus.ProviderGoxus(config, sqlLoggerFunc)
 	if err != nil {
 		cleanup3()
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	ihttpServer, cleanup5, err := server.ProvideAPI(configappService, iLogFile, domainService)
+	rbacService, cleanup5, err := rbac.ProvideRbac(dbGoxusRepo)
 	if err != nil {
 		cleanup4()
 		cleanup3()
@@ -50,7 +59,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	cron, cleanup6, err := examplejobs.ProvideExampleJobs(domainService)
+	userdomainService, cleanup6, err := userdomain.ProvideUserService(dbGoxusRepo, rbacService)
 	if err != nil {
 		cleanup5()
 		cleanup4()
@@ -59,7 +68,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	iApp, cleanup7, err := newApp(service, domainService, ihttpServer, cron)
+	domainService, cleanup7, err := domainapp.ProvideDomain(service, configappService, rbacService, userdomainService)
 	if err != nil {
 		cleanup6()
 		cleanup5()
@@ -69,7 +78,61 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	iLogFile, cleanup8, err := logfile.ProvideLogFile(service)
+	if err != nil {
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	ihttpServer, cleanup9, err := server.ProvideAPI(configappService, iLogFile, domainService)
+	if err != nil {
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	cron, cleanup10, err := examplejobs.ProvideExampleJobs(domainService)
+	if err != nil {
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	iApp, cleanup11, err := newApp(service, domainService, ihttpServer, cron)
+	if err != nil {
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	return iApp, func() {
+		cleanup11()
+		cleanup10()
+		cleanup9()
+		cleanup8()
 		cleanup7()
 		cleanup6()
 		cleanup5()
