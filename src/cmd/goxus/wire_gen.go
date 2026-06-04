@@ -15,6 +15,7 @@ import (
 	"goxus/src/internal/app/goxus/domain/user"
 	"goxus/src/internal/app/goxus/log"
 	"goxus/src/internal/pkg/db/goxus"
+	"goxus/src/internal/pkg/services/ratelimit"
 	"goxus/src/internal/pkg/services/rbac"
 )
 
@@ -89,7 +90,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	ihttpServer, cleanup9, err := server.ProvideAPI(configappService, iLogFile, domainService)
+	ratelimitService, cleanup9, err := ratelimit.ProvideRateLimiter(configappService)
 	if err != nil {
 		cleanup8()
 		cleanup7()
@@ -101,7 +102,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	cron, cleanup10, err := examplejobs.ProvideExampleJobs(domainService)
+	ihttpServer, cleanup10, err := server.ProvideAPI(configappService, iLogFile, domainService, ratelimitService)
 	if err != nil {
 		cleanup9()
 		cleanup8()
@@ -114,7 +115,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	iApp, cleanup11, err := newApp(service, domainService, ihttpServer, cron)
+	cron, cleanup11, err := examplejobs.ProvideExampleJobs(domainService)
 	if err != nil {
 		cleanup10()
 		cleanup9()
@@ -128,7 +129,23 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	iApp, cleanup12, err := newApp(service, domainService, ihttpServer, cron)
+	if err != nil {
+		cleanup11()
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	return iApp, func() {
+		cleanup12()
 		cleanup11()
 		cleanup10()
 		cleanup9()

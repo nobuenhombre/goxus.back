@@ -13,6 +13,7 @@ import (
 	"goxus/src/internal/app/goxus/api/server/router/v1"
 	domainapp "goxus/src/internal/app/goxus/domain"
 	"goxus/src/internal/app/goxus/version"
+	"goxus/src/internal/pkg/services/ratelimit"
 )
 
 // HTTPRouter wraps the Gin engine with versioned API routes.
@@ -23,7 +24,7 @@ type HTTPRouter struct {
 }
 
 // NewHTTPRouter creates a new HTTPRouter.
-func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService) (router *HTTPRouter) {
+func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service) (router *HTTPRouter) {
 	router = new(HTTPRouter)
 
 	if logFile != nil {
@@ -38,13 +39,13 @@ func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService) (router *HTTPR
 	router.Router.Use(router.Middlewares.CORSMiddleware())
 	router.Router.Use(router.Middlewares.APILoggerMiddleware())
 
-	router.SetupRoutes(dom)
+	router.SetupRoutes(dom, rl)
 
 	return
 }
 
 // SetupRoutes registers all HTTP routes including versioned API groups.
-func (r *HTTPRouter) SetupRoutes(dom domainapp.DomainService) {
+func (r *HTTPRouter) SetupRoutes(dom domainapp.DomainService, rl ratelimit.Service) {
 	// Unversioned health check
 	r.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -57,6 +58,6 @@ func (r *HTTPRouter) SetupRoutes(dom domainapp.DomainService) {
 	// Versioned API group
 	api := r.Router.Group("/api")
 	{
-		v1.SetupRoutes(api, dom)
+		v1.SetupRoutes(api, dom, rl)
 	}
 }

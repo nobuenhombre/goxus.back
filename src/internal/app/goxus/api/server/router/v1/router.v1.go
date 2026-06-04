@@ -6,15 +6,17 @@ import (
 	"goxus/src/internal/app/goxus/api/server/router/v1/handlers"
 	"goxus/src/internal/app/goxus/api/server/router/v1/middlewares"
 	domainapp "goxus/src/internal/app/goxus/domain"
+	"goxus/src/internal/pkg/services/ratelimit"
 )
 
 // SetupRoutes registers all v1 API routes on the given RouterGroup.
 // All routes are mounted under /api/v1.
-func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService) {
+func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit.Service) {
 	v1 := api.Group("/v1")
 	{
-		m := middlewares.NewHttpMiddleware(dom)
+		m := middlewares.NewHttpMiddleware(dom, rl)
 		authMiddleware := m.AuthTokenMiddleware()
+		loginRateLimitMiddleware := m.LoginRateLimitMiddleware()
 
 		// Handlers
 		h := handlers.NewHttpHandler(dom)
@@ -26,7 +28,7 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService) {
 		// Auth
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/login", h.LoginHandler)
+			auth.POST("/login", loginRateLimitMiddleware, h.LoginHandler)
 		}
 
 		// Authenticated user routes

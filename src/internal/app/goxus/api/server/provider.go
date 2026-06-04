@@ -6,6 +6,7 @@ import (
 	configapp "goxus/src/internal/app/goxus/config"
 	domainapp "goxus/src/internal/app/goxus/domain"
 	logfile "goxus/src/internal/app/goxus/log"
+	"goxus/src/internal/pkg/services/ratelimit"
 
 	"github.com/google/wire"
 	"github.com/nobuenhombre/suikat/pkg/ge"
@@ -17,12 +18,12 @@ var ProviderSet = wire.NewSet(
 )
 
 // ProvideAPI creates the HTTP API server (Gin) with graceful shutdown support.
-func ProvideAPI(configApp configapp.Service, lf logfile.ILogFile, dom domainapp.DomainService) (IHTTPServer, func(), error) {
+func ProvideAPI(configApp configapp.Service, lf logfile.ILogFile, dom domainapp.DomainService, rl ratelimit.Service) (IHTTPServer, func(), error) {
 	cleanup := func() {
 		log.Println("API cleanup")
 	}
 
-	srv, err := NewHTTPServer(new(configApp.Get().Hosts.API), lf.Get(), dom)
+	srv, err := NewHTTPServer(new(configApp.Get().Hosts.API), lf.Get(), dom, rl)
 	if err != nil {
 		return nil, cleanup, ge.Pin(err)
 	}

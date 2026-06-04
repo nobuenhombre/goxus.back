@@ -137,8 +137,11 @@ cron:
 ## Commands
 
 ```bash
-make wire          # Regenerate wire_gen.go + gofmt
-make help          # List build options (root Makefile)
+make wire                     # Regenerate wire_gen.go + gofmt
+make help                     # List build options (root Makefile)
+make test                     # Run all tests with race detection
+make test-cover               # Run tests + show coverage report (per-package + total)
+make test-coverage-threshold  # Run tests, verify total >= 20.0% (default, override via COVER_THRESHOLD)
 ```
 
 ### Deploy (service/deployments/goxus/linux/)

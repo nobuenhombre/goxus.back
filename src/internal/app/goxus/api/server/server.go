@@ -10,6 +10,7 @@ import (
 	configserver "goxus/src/internal/app/goxus/api/server/config"
 	"goxus/src/internal/app/goxus/api/server/router"
 	domainapp "goxus/src/internal/app/goxus/domain"
+	"goxus/src/internal/pkg/services/ratelimit"
 )
 
 // IHTTPServer defines the HTTP server interface.
@@ -24,10 +25,10 @@ type HTTPServer struct {
 }
 
 // NewHTTPServer creates a new HTTPServer.
-func NewHTTPServer(config *configserver.HTTPServerConfig, logFile *os.File, dom domainapp.DomainService) (srv *HTTPServer, err error) {
+func NewHTTPServer(config *configserver.HTTPServerConfig, logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service) (srv *HTTPServer, err error) {
 	srv = new(HTTPServer)
 
-	srv.Router = router.NewHTTPRouter(logFile, dom)
+	srv.Router = router.NewHTTPRouter(logFile, dom, rl)
 
 	srv.Server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", config.Host, config.Port),

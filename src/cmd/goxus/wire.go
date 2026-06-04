@@ -13,6 +13,7 @@ import (
 	userdomain "goxus/src/internal/app/goxus/domain/user"
 	logfile "goxus/src/internal/app/goxus/log"
 	"goxus/src/internal/pkg/db/goxus"
+	"goxus/src/internal/pkg/services/ratelimit"
 	"goxus/src/internal/pkg/services/rbac"
 )
 
@@ -25,6 +26,7 @@ func initializeApp() (IApp, func(), error) {
 		configapp.ProviderSet,
 		goxus.ProviderSet,
 		rbac.ProviderSet,
+		ratelimit.ProviderSet,
 		userdomain.ProviderSet,
 		domainapp.ProviderSet,
 		examplejobs.ProviderSet,

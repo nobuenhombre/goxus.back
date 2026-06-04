@@ -289,35 +289,35 @@ Four tables:
 
 ### P0 — Critical (Blockers for Production)
 
-1. Hash passwords with `bcrypt`/`argon2`; remove MD5 usage.
-2. Fix CORS: use a domain whitelist instead of `*`.
-3. Add HTTPS/TLS termination.
-4. Replace `strings.TrimLeft` with `strings.TrimPrefix` in auth middleware.
+1. - [ ] Hash passwords with `bcrypt`/`argon2`; remove MD5 usage.
+2. - [ ] Fix CORS: use a domain whitelist instead of `*`.
+3. - [ ] Add HTTPS/TLS termination.
+4. - [ ] Replace `strings.TrimLeft` with `strings.TrimPrefix` in auth middleware.
 
 ### P1 — High
 
-5. Add rate limiting on login.
-6. Add `expires_at` to `users_tokens` + a cleanup job.
-7. Add partial unique index: `users(email) WHERE deleted_at IS NULL`.
-8. Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
-9. Add pagination (`limit`/`offset`) to `ListUsers`.
-10. Switch to structured JSON logging (e.g., `slog` or `zap`).
+5. - [x] Add rate limiting on login.
+6. - [ ] Add `expires_at` to `users_tokens` + a cleanup job.
+7. - [ ] Add partial unique index: `users(email) WHERE deleted_at IS NULL`.
+8. - [ ] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
+9. - [ ] Add pagination (`limit`/`offset`) to `ListUsers`.
+10. - [ ] Switch to structured JSON logging (e.g., `slog` or `zap`).
 
 ### P2 — Medium
 
-11. Add tests for handlers and middlewares (`httptest` + Gin).
-12. Add integration tests for Wire initialization.
-13. Extract a generic RBAC-check helper in `authorized_service.go`.
-14. Add request ID middleware.
-15. Remove `log.Fatal` from graceful shutdown.
-16. Replace `pq.NullTime` with `pgx`/`pgtype` types.
+11. - [ ] Add tests for handlers and middlewares (`httptest` + Gin).
+12. - [ ] Add integration tests for Wire initialization.
+13. - [ ] Extract a generic RBAC-check helper in `authorized_service.go`.
+14. - [ ] Add request ID middleware.
+15. - [ ] Remove `log.Fatal` from graceful shutdown.
+16. - [ ] Replace `pq.NullTime` with `pgx`/`pgtype` types.
 
 ### P3 — Low / Tech Debt
 
-17. Add OpenAPI/Swagger documentation.
-18. Enhance health check with DB connectivity probe.
-19. Add Prometheus metrics.
-20. Define an API versioning strategy (v1 structure is ready).
+17. - [ ] Add OpenAPI/Swagger documentation.
+18. - [ ] Enhance health check with DB connectivity probe.
+19. - [ ] Add Prometheus metrics.
+20. - [ ] Define an API versioning strategy (v1 structure is ready).
 
 ---
 

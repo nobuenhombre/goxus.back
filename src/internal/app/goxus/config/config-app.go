@@ -20,10 +20,18 @@ type HostsConfig struct {
 	API configserver.HTTPServerConfig `yaml:"api,omitempty"`
 }
 
+// LoginRateLimitConfig holds rate-limiting configuration for the login endpoint.
+type LoginRateLimitConfig struct {
+	Enabled     bool   `yaml:"enabled"`
+	MaxAttempts int    `yaml:"max_attempts"`
+	Window      string `yaml:"window"` // duration string, e.g. "5m"
+}
+
 type Config struct {
-	DB    pgxdb.Config          `yaml:"db,omitempty"`
-	Hosts HostsConfig           `yaml:"hosts,omitempty"`
-	Cron  configcron.CronConfig `yaml:"cron,omitempty"`
+	DB        pgxdb.Config          `yaml:"db,omitempty"`
+	Hosts     HostsConfig           `yaml:"hosts,omitempty"`
+	Cron      configcron.CronConfig `yaml:"cron,omitempty"`
+	RateLimit LoginRateLimitConfig  `yaml:"rate_limit,omitempty"`
 }
 
 func New(fileName string) (Service, error) {
