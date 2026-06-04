@@ -10,11 +10,16 @@ type IRbacPermissionRepository interface {
 	Save(rp *RbacPermission) error
 	Delete(rp *RbacPermission) error
 	GetAll() ([]*RbacPermission, error)
+	GetAllWithPagination(limit, offset int) ([]*RbacPermission, error)
+	GetBySQL(sqlstr string, args ...any) ([]*RbacPermission, error)
+	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacPermission, error)
 	GetLastID() (*RbacPermission, error)
 	GetRbacPermissionByID(id int64) (*RbacPermission, error)
 	GetRbacPermissionBySlug(slug string) (*RbacPermission, error)
 	GetPermissionsByRoleSlug(roleSlug string) ([]*RbacPermission, error)
+	GetPermissionsByRoleSlugWithPagination(roleSlug string, limit, offset int) ([]*RbacPermission, error)
 	GetPermissionsByUserIDAndSlug(userID int64, permSlug string) ([]*RbacPermission, error)
+	GetPermissionsByUserIDAndSlugWithPagination(userID int64, permSlug string, limit, offset int) ([]*RbacPermission, error)
 }
 
 // Save saves the RbacPermission to the database.
@@ -42,6 +47,21 @@ func (repo *RbacPermissionRepository) GetAll() ([]*RbacPermission, error) {
 	return GetAllRbacPermission(repo.db)
 }
 
+// GetAllWithPagination возвращает записи с пагинацией
+func (repo *RbacPermissionRepository) GetAllWithPagination(limit, offset int) ([]*RbacPermission, error) {
+	return GetAllRbacPermissionWithPagination(repo.db, limit, offset)
+}
+
+// GetBySQL возвращает записи по произвольному SQL
+func (repo *RbacPermissionRepository) GetBySQL(sqlstr string, args ...any) ([]*RbacPermission, error) {
+	return GetRbacPermissionsBySQL(repo.db, sqlstr, args...)
+}
+
+// GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
+func (repo *RbacPermissionRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacPermission, error) {
+	return GetRbacPermissionsBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
+}
+
 // GetLastID возвращает последний ID
 func (repo *RbacPermissionRepository) GetLastID() (*RbacPermission, error) {
 	return GetLastIDRbacPermission(repo.db)
@@ -62,7 +82,17 @@ func (repo *RbacPermissionRepository) GetPermissionsByRoleSlug(roleSlug string) 
 	return GetPermissionsByRoleSlug(repo.db, roleSlug)
 }
 
+// GetPermissionsByRoleSlugWithPagination runs a custom query with pagination from repository
+func (repo *RbacPermissionRepository) GetPermissionsByRoleSlugWithPagination(roleSlug string, limit, offset int) ([]*RbacPermission, error) {
+	return GetPermissionsByRoleSlugWithPagination(repo.db, roleSlug, limit, offset)
+}
+
 // GetPermissionsByUserIDAndSlug runs a custom query, returning results as RbacPermission.
 func (repo *RbacPermissionRepository) GetPermissionsByUserIDAndSlug(userID int64, permSlug string) ([]*RbacPermission, error) {
 	return GetPermissionsByUserIDAndSlug(repo.db, userID, permSlug)
+}
+
+// GetPermissionsByUserIDAndSlugWithPagination runs a custom query with pagination from repository
+func (repo *RbacPermissionRepository) GetPermissionsByUserIDAndSlugWithPagination(userID int64, permSlug string, limit, offset int) ([]*RbacPermission, error) {
+	return GetPermissionsByUserIDAndSlugWithPagination(repo.db, userID, permSlug, limit, offset)
 }

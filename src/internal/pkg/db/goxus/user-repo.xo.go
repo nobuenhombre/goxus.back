@@ -10,6 +10,9 @@ type IUserRepository interface {
 	Save(u *User) error
 	Delete(u *User) error
 	GetAll() ([]*User, error)
+	GetAllWithPagination(limit, offset int) ([]*User, error)
+	GetBySQL(sqlstr string, args ...any) ([]*User, error)
+	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*User, error)
 	GetLastID() (*User, error)
 	GetUserByEmail(email string) (*User, error)
 	GetUserByID(id int64) (*User, error)
@@ -39,6 +42,21 @@ func NewUserRepository(db pgxdb.DBQuery) *UserRepository {
 // GetAll возвращает все записи
 func (repo *UserRepository) GetAll() ([]*User, error) {
 	return GetAllUser(repo.db)
+}
+
+// GetAllWithPagination возвращает записи с пагинацией
+func (repo *UserRepository) GetAllWithPagination(limit, offset int) ([]*User, error) {
+	return GetAllUserWithPagination(repo.db, limit, offset)
+}
+
+// GetBySQL возвращает записи по произвольному SQL
+func (repo *UserRepository) GetBySQL(sqlstr string, args ...any) ([]*User, error) {
+	return GetUsersBySQL(repo.db, sqlstr, args...)
+}
+
+// GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
+func (repo *UserRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*User, error) {
+	return GetUsersBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
 }
 
 // GetLastID возвращает последний ID

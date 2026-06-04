@@ -10,6 +10,9 @@ type ISchemaMigrationRepository interface {
 	Save(sm *SchemaMigration) error
 	Delete(sm *SchemaMigration) error
 	GetAll() ([]*SchemaMigration, error)
+	GetAllWithPagination(limit, offset int) ([]*SchemaMigration, error)
+	GetBySQL(sqlstr string, args ...any) ([]*SchemaMigration, error)
+	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*SchemaMigration, error)
 	GetLastID() (*SchemaMigration, error)
 	GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error)
 }
@@ -37,6 +40,21 @@ func NewSchemaMigrationRepository(db pgxdb.DBQuery) *SchemaMigrationRepository {
 // GetAll возвращает все записи
 func (repo *SchemaMigrationRepository) GetAll() ([]*SchemaMigration, error) {
 	return GetAllSchemaMigration(repo.db)
+}
+
+// GetAllWithPagination возвращает записи с пагинацией
+func (repo *SchemaMigrationRepository) GetAllWithPagination(limit, offset int) ([]*SchemaMigration, error) {
+	return GetAllSchemaMigrationWithPagination(repo.db, limit, offset)
+}
+
+// GetBySQL возвращает записи по произвольному SQL
+func (repo *SchemaMigrationRepository) GetBySQL(sqlstr string, args ...any) ([]*SchemaMigration, error) {
+	return GetSchemaMigrationsBySQL(repo.db, sqlstr, args...)
+}
+
+// GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
+func (repo *SchemaMigrationRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*SchemaMigration, error) {
+	return GetSchemaMigrationsBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
 }
 
 // GetLastID возвращает последний ID

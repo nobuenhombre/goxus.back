@@ -6,6 +6,7 @@ package goxus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -250,6 +251,49 @@ ORDER BY
 	return res, nil
 }
 
+// GetAllUsersTokenWithPagination returns a paginated set of rows from 'public.users_tokens',
+func GetAllUsersTokenWithPagination(db pgxdb.DBQuery, limit, offset int) ([]*UsersToken, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `
+SELECT
+id, token, user_id, last_used_at, created_at, updated_at, deleted_at
+FROM public.users_tokens
+ORDER BY
+	id ASC
+LIMIT $1 OFFSET $2
+`
+
+	q, err := db.Query(ctx, sqlstr, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*UsersToken
+	for q.Next() {
+		ut := UsersToken{}
+
+		// scan
+		err = q.Scan(&ut.ID, &ut.Token, &ut.UserID, &ut.LastUsedAt, &ut.CreatedAt, &ut.UpdatedAt, &ut.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+		ut.SetExists(true)
+
+		res = append(res, &ut)
+	}
+
+	return res, nil
+}
+
 // GetUsersTokensBySQL returns rows from 'public.users_tokens' by your SQL,
 func GetUsersTokensBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*UsersToken, error) {
 	ctx := context.Background()
@@ -259,6 +303,41 @@ func GetUsersTokensBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*Users
 	q, err := db.Query(ctx, sqlstr, args...)
 
 	db.WriteLog(sqlstr, time.Since(start), args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*UsersToken
+	for q.Next() {
+		ut := UsersToken{}
+
+		// scan
+		err = q.Scan(&ut.ID, &ut.Token, &ut.UserID, &ut.LastUsedAt, &ut.CreatedAt, &ut.UpdatedAt, &ut.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &ut)
+	}
+
+	return res, nil
+}
+
+// GetUsersTokensBySQLWithPagination returns a paginated set of rows from 'public.users_tokens' by your SQL,
+func GetUsersTokensBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset int, args ...any) ([]*UsersToken, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	paginatedSQL := sqlstr + fmt.Sprintf("\nLIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	paginatedArgs := append(args, limit, offset)
+
+	q, err := db.Query(ctx, paginatedSQL, paginatedArgs...)
+
+	db.WriteLog(paginatedSQL, time.Since(start), paginatedArgs...)
 
 	if err != nil {
 		return nil, err
@@ -426,6 +505,62 @@ WHERE
 	q, err := db.Query(ctx, sqlstr, userID)
 
 	db.WriteLog(sqlstr, time.Since(start), userID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*UsersToken{}
+	for q.Next() {
+		ut := UsersToken{
+			_exists: true,
+		}
+
+		// scan
+		err = q.Scan(&ut.ID, &ut.Token, &ut.UserID, &ut.LastUsedAt, &ut.CreatedAt, &ut.UpdatedAt, &ut.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &ut)
+	}
+
+	return res, nil
+}
+
+// GetUsersTokensByUserIDWithPagination retrieves a paginated set of rows from 'public.users_tokens' as a UsersToken.
+//
+// Generated from index 'users_tokens_user_id_index'.
+func GetUsersTokensByUserIDWithPagination(db pgxdb.DBQuery, userID int64, limit, offset int) ([]*UsersToken, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	var sqlstr string
+	{
+		const baseSQL = `
+SELECT
+	id, token, user_id, last_used_at, created_at, updated_at, deleted_at
+FROM
+	public.users_tokens
+WHERE
+	user_id = $1
+ORDER BY
+	id ASC
+`
+		sqlstr = baseSQL + "\nLIMIT $" + fmt.Sprint(1+1) + " OFFSET $" + fmt.Sprint(2+1)
+	}
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, userID, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), userID, limit, offset)
 
 	if err != nil {
 		return nil, err

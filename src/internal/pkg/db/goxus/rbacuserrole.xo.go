@@ -6,6 +6,7 @@ package goxus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
@@ -247,6 +248,49 @@ ORDER BY
 	return res, nil
 }
 
+// GetAllRbacUserRoleWithPagination returns a paginated set of rows from 'public.rbac_user_roles',
+func GetAllRbacUserRoleWithPagination(db pgxdb.DBQuery, limit, offset int) ([]*RbacUserRole, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `
+SELECT
+id, user_id, role_id, created_at, updated_at
+FROM public.rbac_user_roles
+ORDER BY
+	id ASC
+LIMIT $1 OFFSET $2
+`
+
+	q, err := db.Query(ctx, sqlstr, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*RbacUserRole
+	for q.Next() {
+		rur := RbacUserRole{}
+
+		// scan
+		err = q.Scan(&rur.ID, &rur.UserID, &rur.RoleID, &rur.CreatedAt, &rur.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		rur.SetExists(true)
+
+		res = append(res, &rur)
+	}
+
+	return res, nil
+}
+
 // GetRbacUserRolesBySQL returns rows from 'public.rbac_user_roles' by your SQL,
 func GetRbacUserRolesBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*RbacUserRole, error) {
 	ctx := context.Background()
@@ -256,6 +300,41 @@ func GetRbacUserRolesBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*Rba
 	q, err := db.Query(ctx, sqlstr, args...)
 
 	db.WriteLog(sqlstr, time.Since(start), args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*RbacUserRole
+	for q.Next() {
+		rur := RbacUserRole{}
+
+		// scan
+		err = q.Scan(&rur.ID, &rur.UserID, &rur.RoleID, &rur.CreatedAt, &rur.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &rur)
+	}
+
+	return res, nil
+}
+
+// GetRbacUserRolesBySQLWithPagination returns a paginated set of rows from 'public.rbac_user_roles' by your SQL,
+func GetRbacUserRolesBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset int, args ...any) ([]*RbacUserRole, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	paginatedSQL := sqlstr + fmt.Sprintf("\nLIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	paginatedArgs := append(args, limit, offset)
+
+	q, err := db.Query(ctx, paginatedSQL, paginatedArgs...)
+
+	db.WriteLog(paginatedSQL, time.Since(start), paginatedArgs...)
 
 	if err != nil {
 		return nil, err
@@ -427,6 +506,56 @@ func GetRbacUserRoleByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacUserRole, e
 	q, err := db.Query(ctx, sqlstr, roleID)
 
 	db.WriteLog(sqlstr, time.Since(start), roleID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacUserRole{}
+	for q.Next() {
+		rur := RbacUserRole{}
+
+		// scan
+		err = q.Scan(&rur.ID, &rur.UserID, &rur.RoleID, &rur.CreatedAt, &rur.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rur._exists = true
+		rur._deleted = false
+
+		res = append(res, &rur)
+	}
+
+	return res, nil
+}
+
+// GetRbacUserRoleByRoleIDWithPagination runs a custom query with pagination
+func GetRbacUserRoleByRoleIDWithPagination(db pgxdb.DBQuery, roleID int64, limit, offset int) ([]*RbacUserRole, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var baseSQL = `SELECT ` + "\n" +
+		`id, user_id, role_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_user_roles ` + "\n" +
+		`WHERE ` + "\n" +
+		`role_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	sqlstr := baseSQL + "\nLIMIT $" + fmt.Sprint(1+1) + " OFFSET $" + fmt.Sprint(2+1)
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, roleID, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), roleID, limit, offset)
 
 	if err != nil {
 		return nil, err

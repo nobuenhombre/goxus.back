@@ -6,6 +6,7 @@ package goxus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
@@ -247,6 +248,49 @@ ORDER BY
 	return res, nil
 }
 
+// GetAllRbacRolePermissionWithPagination returns a paginated set of rows from 'public.rbac_role_permissions',
+func GetAllRbacRolePermissionWithPagination(db pgxdb.DBQuery, limit, offset int) ([]*RbacRolePermission, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `
+SELECT
+id, role_id, permission_id, created_at, updated_at
+FROM public.rbac_role_permissions
+ORDER BY
+	id ASC
+LIMIT $1 OFFSET $2
+`
+
+	q, err := db.Query(ctx, sqlstr, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*RbacRolePermission
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		rrp.SetExists(true)
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}
+
 // GetRbacRolePermissionsBySQL returns rows from 'public.rbac_role_permissions' by your SQL,
 func GetRbacRolePermissionsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*RbacRolePermission, error) {
 	ctx := context.Background()
@@ -256,6 +300,41 @@ func GetRbacRolePermissionsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) (
 	q, err := db.Query(ctx, sqlstr, args...)
 
 	db.WriteLog(sqlstr, time.Since(start), args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*RbacRolePermission
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}
+
+// GetRbacRolePermissionsBySQLWithPagination returns a paginated set of rows from 'public.rbac_role_permissions' by your SQL,
+func GetRbacRolePermissionsBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset int, args ...any) ([]*RbacRolePermission, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	paginatedSQL := sqlstr + fmt.Sprintf("\nLIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	paginatedArgs := append(args, limit, offset)
+
+	q, err := db.Query(ctx, paginatedSQL, paginatedArgs...)
+
+	db.WriteLog(paginatedSQL, time.Since(start), paginatedArgs...)
 
 	if err != nil {
 		return nil, err
@@ -453,6 +532,56 @@ func GetRbacRolePermissionByPermissionID(db pgxdb.DBQuery, permissionID int64) (
 	return res, nil
 }
 
+// GetRbacRolePermissionByPermissionIDWithPagination runs a custom query with pagination
+func GetRbacRolePermissionByPermissionIDWithPagination(db pgxdb.DBQuery, permissionID int64, limit, offset int) ([]*RbacRolePermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var baseSQL = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`permission_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	sqlstr := baseSQL + "\nLIMIT $" + fmt.Sprint(1+1) + " OFFSET $" + fmt.Sprint(2+1)
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, permissionID, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), permissionID, limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacRolePermission{}
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rrp._exists = true
+		rrp._deleted = false
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}
+
 // GetRbacRolePermissionByRoleID runs a custom query, returning results as RbacRolePermission.
 func GetRbacRolePermissionByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacRolePermission, error) {
 	var err error
@@ -475,6 +604,56 @@ func GetRbacRolePermissionByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacRoleP
 	q, err := db.Query(ctx, sqlstr, roleID)
 
 	db.WriteLog(sqlstr, time.Since(start), roleID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacRolePermission{}
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rrp._exists = true
+		rrp._deleted = false
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}
+
+// GetRbacRolePermissionByRoleIDWithPagination runs a custom query with pagination
+func GetRbacRolePermissionByRoleIDWithPagination(db pgxdb.DBQuery, roleID int64, limit, offset int) ([]*RbacRolePermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var baseSQL = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`role_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	sqlstr := baseSQL + "\nLIMIT $" + fmt.Sprint(1+1) + " OFFSET $" + fmt.Sprint(2+1)
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, roleID, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), roleID, limit, offset)
 
 	if err != nil {
 		return nil, err

@@ -10,10 +10,14 @@ type IRbacRoleRepository interface {
 	Save(rr *RbacRole) error
 	Delete(rr *RbacRole) error
 	GetAll() ([]*RbacRole, error)
+	GetAllWithPagination(limit, offset int) ([]*RbacRole, error)
+	GetBySQL(sqlstr string, args ...any) ([]*RbacRole, error)
+	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacRole, error)
 	GetLastID() (*RbacRole, error)
 	GetRbacRoleByID(id int64) (*RbacRole, error)
 	GetRbacRoleBySlug(slug string) (*RbacRole, error)
 	GetRolesByUserID(userID int64) ([]*RbacRole, error)
+	GetRolesByUserIDWithPagination(userID int64, limit, offset int) ([]*RbacRole, error)
 }
 
 // Save saves the RbacRole to the database.
@@ -41,6 +45,21 @@ func (repo *RbacRoleRepository) GetAll() ([]*RbacRole, error) {
 	return GetAllRbacRole(repo.db)
 }
 
+// GetAllWithPagination возвращает записи с пагинацией
+func (repo *RbacRoleRepository) GetAllWithPagination(limit, offset int) ([]*RbacRole, error) {
+	return GetAllRbacRoleWithPagination(repo.db, limit, offset)
+}
+
+// GetBySQL возвращает записи по произвольному SQL
+func (repo *RbacRoleRepository) GetBySQL(sqlstr string, args ...any) ([]*RbacRole, error) {
+	return GetRbacRolesBySQL(repo.db, sqlstr, args...)
+}
+
+// GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
+func (repo *RbacRoleRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacRole, error) {
+	return GetRbacRolesBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
+}
+
 // GetLastID возвращает последний ID
 func (repo *RbacRoleRepository) GetLastID() (*RbacRole, error) {
 	return GetLastIDRbacRole(repo.db)
@@ -59,4 +78,9 @@ func (repo *RbacRoleRepository) GetRbacRoleBySlug(slug string) (*RbacRole, error
 // GetRolesByUserID runs a custom query, returning results as RbacRole.
 func (repo *RbacRoleRepository) GetRolesByUserID(userID int64) ([]*RbacRole, error) {
 	return GetRolesByUserID(repo.db, userID)
+}
+
+// GetRolesByUserIDWithPagination runs a custom query with pagination from repository
+func (repo *RbacRoleRepository) GetRolesByUserIDWithPagination(userID int64, limit, offset int) ([]*RbacRole, error) {
+	return GetRolesByUserIDWithPagination(repo.db, userID, limit, offset)
 }

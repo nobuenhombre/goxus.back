@@ -10,10 +10,14 @@ type IUsersTokenRepository interface {
 	Save(ut *UsersToken) error
 	Delete(ut *UsersToken) error
 	GetAll() ([]*UsersToken, error)
+	GetAllWithPagination(limit, offset int) ([]*UsersToken, error)
+	GetBySQL(sqlstr string, args ...any) ([]*UsersToken, error)
+	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*UsersToken, error)
 	GetLastID() (*UsersToken, error)
 	GetUsersTokenByID(id int64) (*UsersToken, error)
 	GetUsersTokenByToken(token string) (*UsersToken, error)
 	FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error)
+	FindAllUsersTokensByUserIDWithPagination(userID int64, limit, offset int) ([]*UsersToken, error)
 	DeleteExpiredTokens(ttlDays int) error
 }
 
@@ -42,6 +46,21 @@ func (repo *UsersTokenRepository) GetAll() ([]*UsersToken, error) {
 	return GetAllUsersToken(repo.db)
 }
 
+// GetAllWithPagination возвращает записи с пагинацией
+func (repo *UsersTokenRepository) GetAllWithPagination(limit, offset int) ([]*UsersToken, error) {
+	return GetAllUsersTokenWithPagination(repo.db, limit, offset)
+}
+
+// GetBySQL возвращает записи по произвольному SQL
+func (repo *UsersTokenRepository) GetBySQL(sqlstr string, args ...any) ([]*UsersToken, error) {
+	return GetUsersTokensBySQL(repo.db, sqlstr, args...)
+}
+
+// GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
+func (repo *UsersTokenRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*UsersToken, error) {
+	return GetUsersTokensBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
+}
+
 // GetLastID возвращает последний ID
 func (repo *UsersTokenRepository) GetLastID() (*UsersToken, error) {
 	return GetLastIDUsersToken(repo.db)
@@ -60,6 +79,11 @@ func (repo *UsersTokenRepository) GetUsersTokenByToken(token string) (*UsersToke
 // FindAllUsersTokensByUserID возвращает все записи по индексу 'users_tokens_user_id_index'.
 func (repo *UsersTokenRepository) FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error) {
 	return GetUsersTokensByUserID(repo.db, userID)
+}
+
+// FindAllUsersTokensByUserIDWithPagination возвращает записи по индексу с пагинацией
+func (repo *UsersTokenRepository) FindAllUsersTokensByUserIDWithPagination(userID int64, limit, offset int) ([]*UsersToken, error) {
+	return GetUsersTokensByUserIDWithPagination(repo.db, userID, limit, offset)
 }
 
 func (repo *UsersTokenRepository) DeleteExpiredTokens(ttlDays int) error {

@@ -6,6 +6,7 @@ package goxus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
@@ -244,6 +245,49 @@ ORDER BY
 	return res, nil
 }
 
+// GetAllSchemaMigrationWithPagination returns a paginated set of rows from 'public.schema_migrations',
+func GetAllSchemaMigrationWithPagination(db pgxdb.DBQuery, limit, offset int) ([]*SchemaMigration, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `
+SELECT
+version, dirty
+FROM public.schema_migrations
+ORDER BY
+	id ASC
+LIMIT $1 OFFSET $2
+`
+
+	q, err := db.Query(ctx, sqlstr, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*SchemaMigration
+	for q.Next() {
+		sm := SchemaMigration{}
+
+		// scan
+		err = q.Scan(&sm.Version, &sm.Dirty)
+		if err != nil {
+			return nil, err
+		}
+		sm.SetExists(true)
+
+		res = append(res, &sm)
+	}
+
+	return res, nil
+}
+
 // GetSchemaMigrationsBySQL returns rows from 'public.schema_migrations' by your SQL,
 func GetSchemaMigrationsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*SchemaMigration, error) {
 	ctx := context.Background()
@@ -253,6 +297,41 @@ func GetSchemaMigrationsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*
 	q, err := db.Query(ctx, sqlstr, args...)
 
 	db.WriteLog(sqlstr, time.Since(start), args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*SchemaMigration
+	for q.Next() {
+		sm := SchemaMigration{}
+
+		// scan
+		err = q.Scan(&sm.Version, &sm.Dirty)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &sm)
+	}
+
+	return res, nil
+}
+
+// GetSchemaMigrationsBySQLWithPagination returns a paginated set of rows from 'public.schema_migrations' by your SQL,
+func GetSchemaMigrationsBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset int, args ...any) ([]*SchemaMigration, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	paginatedSQL := sqlstr + fmt.Sprintf("\nLIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	paginatedArgs := append(args, limit, offset)
+
+	q, err := db.Query(ctx, paginatedSQL, paginatedArgs...)
+
+	db.WriteLog(paginatedSQL, time.Since(start), paginatedArgs...)
 
 	if err != nil {
 		return nil, err

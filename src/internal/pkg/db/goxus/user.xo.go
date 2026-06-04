@@ -6,6 +6,7 @@ package goxus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -251,6 +252,49 @@ ORDER BY
 	return res, nil
 }
 
+// GetAllUserWithPagination returns a paginated set of rows from 'public.users',
+func GetAllUserWithPagination(db pgxdb.DBQuery, limit, offset int) ([]*User, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `
+SELECT
+id, name, email, password, email_verified_at, created_at, updated_at, deleted_at
+FROM public.users
+ORDER BY
+	id ASC
+LIMIT $1 OFFSET $2
+`
+
+	q, err := db.Query(ctx, sqlstr, limit, offset)
+
+	db.WriteLog(sqlstr, time.Since(start), limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*User
+	for q.Next() {
+		u := User{}
+
+		// scan
+		err = q.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+		u.SetExists(true)
+
+		res = append(res, &u)
+	}
+
+	return res, nil
+}
+
 // GetUsersBySQL returns rows from 'public.users' by your SQL,
 func GetUsersBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*User, error) {
 	ctx := context.Background()
@@ -260,6 +304,41 @@ func GetUsersBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*User, error
 	q, err := db.Query(ctx, sqlstr, args...)
 
 	db.WriteLog(sqlstr, time.Since(start), args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*User
+	for q.Next() {
+		u := User{}
+
+		// scan
+		err = q.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &u)
+	}
+
+	return res, nil
+}
+
+// GetUsersBySQLWithPagination returns a paginated set of rows from 'public.users' by your SQL,
+func GetUsersBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset int, args ...any) ([]*User, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	paginatedSQL := sqlstr + fmt.Sprintf("\nLIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	paginatedArgs := append(args, limit, offset)
+
+	q, err := db.Query(ctx, paginatedSQL, paginatedArgs...)
+
+	db.WriteLog(paginatedSQL, time.Since(start), paginatedArgs...)
 
 	if err != nil {
 		return nil, err
