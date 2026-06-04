@@ -17,7 +17,12 @@ cron:
     example_job:
         enabled: true
         schedule: '@every 10m'
+    token_cleanup_job:
+        enabled: true
+        schedule: '@every 1m'
 rate_limit:
     enabled: true
     max_attempts: 5
     window: "5m"
+token:
+    ttl_days: 7

@@ -212,3 +212,8 @@ func (a *authorizedService) RevokeRole(ctx context.Context, userID int64, roleSl
 
 	return a.inner.RevokeRole(ctx, userID, roleSlug)
 }
+
+// DeleteExpiredTokens soft-deletes tokens older than ttlDays — system operation, no RBAC.
+func (a *authorizedService) DeleteExpiredTokens(ctx context.Context, ttlDays int) error {
+	return a.inner.DeleteExpiredTokens(ctx, ttlDays)
+}

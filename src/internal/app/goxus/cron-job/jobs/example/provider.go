@@ -1,40 +1,34 @@
 package examplejobs
 
 import (
+	configapp "goxus/src/internal/app/goxus/config"
 	"log"
 
 	"github.com/google/wire"
-	"github.com/nobuenhombre/suikat/pkg/ge"
-	"github.com/robfig/cron/v3"
+
 	domainapp "goxus/src/internal/app/goxus/domain"
+
+	"github.com/nobuenhombre/suikat/pkg/ge"
 )
 
-// ProviderSet exports Wire providers for the example cron job.
+// ProviderSet exports Wire providers for the example job.
 var ProviderSet = wire.NewSet(
-	ProvideExampleJobs,
+	ProvideExampleJob,
 )
 
-// ProvideExampleJobs builds the cron scheduler with the example job.
-func ProvideExampleJobs(dom domainapp.DomainService) (*cron.Cron, func(), error) {
+// ProvideExampleJob builds the example cron job instance (without scheduler).
+// The scheduler is wired centrally in the cron-job/jobs package.
+func ProvideExampleJob(appConfig configapp.Service, dom domainapp.DomainService) (*Job, func(), error) {
 	cleanup := func() {
-		log.Println("Example jobs cleanup")
+		log.Println("Example job cleanup")
 	}
 
-	cfg := dom.GetConfig()
+	cfg := appConfig.Get()
 
-	exampleJob, err := New(dom)
+	job, err := New(dom, &cfg.Example)
 	if err != nil {
 		return nil, cleanup, ge.Pin(err)
 	}
 
-	c := cron.New()
-
-	if cfg.Cron.ExampleJob.Enabled {
-		_, err = c.AddJob(cfg.Cron.ExampleJob.Schedule, exampleJob)
-		if err != nil {
-			return nil, cleanup, ge.Pin(err)
-		}
-	}
-
-	return c, cleanup, nil
+	return job, cleanup, nil
 }

@@ -194,6 +194,11 @@ func (s *impl) RevokeRole(_ context.Context, userID int64, roleSlug string) erro
 	return s.rbacSvc.RevokeUserRole(userID, roleSlug)
 }
 
+// DeleteExpiredTokens soft-deletes all tokens older than ttlDays days.
+func (s *impl) DeleteExpiredTokens(_ context.Context, ttlDays int) error {
+	return s.repo.UsersToken.DeleteExpiredTokens(ttlDays)
+}
+
 // generateToken creates a UUID v4 token.
 func generateToken() string {
 	return uuid.New().String()

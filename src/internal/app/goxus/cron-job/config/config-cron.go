@@ -1,9 +1,11 @@
 package configcron
 
-import (
-	configexample "goxus/src/internal/app/goxus/cron-job/jobs/example/config"
-)
+type CronJobConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Schedule string `yaml:"schedule,omitempty"`
+}
 
 type CronConfig struct {
-	ExampleJob configexample.ExampleJobConfig `yaml:"example_job"`
+	ExampleJob      CronJobConfig `yaml:"example_job"`
+	TokenCleanupJob CronJobConfig `yaml:"token_cleanup_job,omitempty"`
 }

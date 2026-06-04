@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -559,4 +560,177 @@ func TestRevokeRole_NotAssigned(t *testing.T) {
 	// Revoke without assigning — should not error
 	err = fx.raw.RevokeRole(context.Background(), user.ID, "viewer")
 	require.NoError(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// DeleteExpiredTokens
+// ---------------------------------------------------------------------------
+
+// TestDeleteExpiredTokens_DeletesOldTokens verifies tokens older than ttlDays are soft-deleted.
+func TestDeleteExpiredTokens_DeletesOldTokens(t *testing.T) {
+	fx := setupTest(t)
+
+	// Create a user and login to get a token
+	_, err := fx.raw.Create(context.Background(), "OldToken", "old@example.com", "pass")
+	require.NoError(t, err)
+
+	_, token, err := fx.raw.Login(context.Background(), "old@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	// Manually set created_at to 31 days ago to simulate an expired token
+	token.CreatedAt = time.Now().Add(-31 * 24 * time.Hour)
+	token.UpdatedAt = time.Now()
+	err = fx.repo.UsersToken.Save(token)
+	require.NoError(t, err)
+
+	// Act: delete tokens older than 30 days
+	err = fx.raw.DeleteExpiredTokens(context.Background(), 30)
+	require.NoError(t, err)
+
+	// Assert: token should now be soft-deleted
+	gotToken, err := fx.repo.UsersToken.GetUsersTokenByToken(token.Token)
+	require.NoError(t, err)
+	assert.True(t, gotToken.DeletedAt.Valid)
+}
+
+// TestDeleteExpiredTokens_KeepsFreshTokens verifies recent tokens are not deleted.
+func TestDeleteExpiredTokens_KeepsFreshTokens(t *testing.T) {
+	fx := setupTest(t)
+
+	// Create a user and login to get a token
+	_, err := fx.raw.Create(context.Background(), "FreshToken", "fresh@example.com", "pass")
+	require.NoError(t, err)
+
+	_, token, err := fx.raw.Login(context.Background(), "fresh@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	// Act: delete tokens older than 30 days (token is fresh)
+	err = fx.raw.DeleteExpiredTokens(context.Background(), 30)
+	require.NoError(t, err)
+
+	// Assert: token should NOT be soft-deleted
+	gotToken, err := fx.repo.UsersToken.GetUsersTokenByToken(token.Token)
+	require.NoError(t, err)
+	assert.False(t, gotToken.DeletedAt.Valid)
+}
+
+// TestDeleteExpiredTokens_UsesLastUsedAt verifies that last_used_at is preferred
+// over created_at when determining expiry.
+func TestDeleteExpiredTokens_UsesLastUsedAt(t *testing.T) {
+	fx := setupTest(t)
+
+	// Create a user and login to get a token
+	_, err := fx.raw.Create(context.Background(), "LastUsed", "lastused@example.com", "pass")
+	require.NoError(t, err)
+
+	_, token, err := fx.raw.Login(context.Background(), "lastused@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	// Set created_at to recent (1 day ago) but last_used_at to far past (31 days ago)
+	token.CreatedAt = time.Now().Add(-1 * 24 * time.Hour)
+	token.LastUsedAt = pq.NullTime{Time: time.Now().Add(-31 * 24 * time.Hour), Valid: true}
+	token.UpdatedAt = time.Now()
+	err = fx.repo.UsersToken.Save(token)
+	require.NoError(t, err)
+
+	// Act: delete tokens older than 15 days
+	// Token's created_at is 1 day old (fresh), but last_used_at is 31 days old (expired)
+	err = fx.raw.DeleteExpiredTokens(context.Background(), 15)
+	require.NoError(t, err)
+
+	// Assert: token should be deleted because last_used_at is the decisive field
+	gotToken, err := fx.repo.UsersToken.GetUsersTokenByToken(token.Token)
+	require.NoError(t, err)
+	assert.True(t, gotToken.DeletedAt.Valid)
+}
+
+// TestDeleteExpiredTokens_TTLZero verifies that ttlDays=0 deletes past tokens.
+func TestDeleteExpiredTokens_TTLZero(t *testing.T) {
+	fx := setupTest(t)
+
+	// Create a user and login to get a token
+	_, err := fx.raw.Create(context.Background(), "ZeroTTL", "zerottl@example.com", "pass")
+	require.NoError(t, err)
+
+	_, token, err := fx.raw.Login(context.Background(), "zerottl@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	// Use UTC() to match PostgreSQL's NOW() behaviour with timestamp without time zone
+	// (otherwise local +04 timezone wall clock is stored ahead of NOW() in UTC)
+	nowUTC := time.Now().UTC()
+	token.LastUsedAt = pq.NullTime{Time: nowUTC.Add(-1 * time.Hour), Valid: true}
+	token.UpdatedAt = nowUTC
+	err = fx.repo.UsersToken.Save(token)
+	require.NoError(t, err)
+
+	// Act: delete tokens older than 0 days (= any token with last_used_at/created_at before NOW())
+	err = fx.raw.DeleteExpiredTokens(context.Background(), 0)
+	require.NoError(t, err)
+
+	// Assert: token should be soft-deleted
+	gotToken, err := fx.repo.UsersToken.GetUsersTokenByToken(token.Token)
+	require.NoError(t, err)
+	assert.True(t, gotToken.DeletedAt.Valid)
+}
+
+// TestDeleteExpiredTokens_NoTokens verifies the method handles an empty DB without error.
+func TestDeleteExpiredTokens_NoTokens(t *testing.T) {
+	fx := setupTest(t)
+
+	// Act: no users or tokens exist, delete should not error
+	err := fx.raw.DeleteExpiredTokens(context.Background(), 30)
+	require.NoError(t, err)
+}
+
+// TestDeleteExpiredTokens_AlreadyDeletedTokens verifies already deleted tokens
+// are not affected (WHERE deleted_at IS NULL in the SQL).
+func TestDeleteExpiredTokens_AlreadyDeletedTokens(t *testing.T) {
+	fx := setupTest(t)
+
+	// Create a user and login to get two tokens
+	_, err := fx.raw.Create(context.Background(), "DelUser", "deluser@example.com", "pass")
+	require.NoError(t, err)
+
+	_, token1, err := fx.raw.Login(context.Background(), "deluser@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token1)
+
+	_, token2, err := fx.raw.Login(context.Background(), "deluser@example.com", "pass")
+	require.NoError(t, err)
+	require.NotNil(t, token2)
+
+	// Make both tokens old
+	token1.CreatedAt = time.Now().Add(-31 * 24 * time.Hour)
+	token1.UpdatedAt = time.Now()
+	err = fx.repo.UsersToken.Save(token1)
+	require.NoError(t, err)
+
+	token2.CreatedAt = time.Now().Add(-31 * 24 * time.Hour)
+	token2.UpdatedAt = time.Now()
+	err = fx.repo.UsersToken.Save(token2)
+	require.NoError(t, err)
+
+	// Soft-delete token1 manually (like logout would do)
+	now := time.Now()
+	token1.DeletedAt = pq.NullTime{Time: now, Valid: true}
+	token1.UpdatedAt = now
+	err = fx.repo.UsersToken.Save(token1)
+	require.NoError(t, err)
+
+	// Act: delete tokens older than 30 days
+	err = fx.raw.DeleteExpiredTokens(context.Background(), 30)
+	require.NoError(t, err)
+
+	// Assert: token1 is already deleted, token2 should now be deleted
+	got1, err := fx.repo.UsersToken.GetUsersTokenByToken(token1.Token)
+	require.NoError(t, err)
+	assert.True(t, got1.DeletedAt.Valid, "already deleted token should remain deleted")
+
+	got2, err := fx.repo.UsersToken.GetUsersTokenByToken(token2.Token)
+	require.NoError(t, err)
+	assert.True(t, got2.DeletedAt.Valid, "old non-deleted token should be deleted by cleanup")
 }

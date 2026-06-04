@@ -1,6 +1,5 @@
 package configexample
 
 type ExampleJobConfig struct {
-	Enabled  bool   `yaml:"enabled"`
-	Schedule string `yaml:"schedule,omitempty"`
+	SomeParam string `yaml:"someParam,omitempty"`
 }

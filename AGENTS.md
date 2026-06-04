@@ -183,6 +183,7 @@ make upgrade             # stop -> build-app-progress -> start -> status
 - **Type assertions:** Providers assert `cli.Service.(*cli.Config)` to extract concrete type — this is the established pattern, not ideal but consistent.
 - **Version:** Single source of truth in `version/version.go`.
 - **Testing:** Table-driven tests in `config-app_test.go`. YAML test fixtures (`_load.yaml`, `_save.yaml`) live alongside the source.
+- **Timestamps:** Все временные метки — только UTC. `time.Now().UTC()` при записи в БД, в SQL — `(NOW() AT TIME ZONE 'UTC')` вместо `NOW()`, `make_interval(days => $1)` вместо `$1 || ' days'`. Подробнее: скилл `go-timestamp-utc`.
 
 ## Gotchas
 
@@ -233,6 +234,18 @@ make upgrade             # stop -> build-app-progress -> start -> status
 | `go-versioning` | Single source of truth, SemVer, ldflags injection, build-time stamping | Version bumps, health endpoint |
 | `go-docker` | Multi-stage Docker builds for Go: distroless, scratch | Docker/deployment changes |
 | `go-grpc` | gRPC services in Go: protobuf, interceptors, streaming | Adding gRPC endpoints (future) |
+
+### Code generation (xo)
+
+| Skill | Description | When |
+|---|---|---|
+| `goxus-xo-codegen` | xo SQL → Go codegen: write SQL in `scripts/xo/goxus/sql/query/{uid,many,one}/`, use `%%param Type%%`, run `make gen` | Any new DB query that isn't simple CRUD |
+
+### Config defaults
+
+| Skill | Description | When |
+|---|---|---|
+| `goxus-config-defaults` | Config default values: `const` → apply in `config.New()` after `Load()` → consumers trust the value | Adding new config fields or fixing magic-number fallbacks |
 
 ## Deployment
 - Binary: statically linked linux/amd64, installed to `/usr/local/bin/goxus`

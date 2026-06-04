@@ -3,6 +3,9 @@ package configapp
 import (
 	configserver "goxus/src/internal/app/goxus/api/server/config"
 	configcron "goxus/src/internal/app/goxus/cron-job/config"
+	configexample "goxus/src/internal/app/goxus/cron-job/jobs/example/config"
+	configcleantokens "goxus/src/internal/app/goxus/cron-job/jobs/token-cleanup/config"
+	configratelimit "goxus/src/internal/pkg/services/ratelimit/config"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
 	"github.com/nobuenhombre/suikat/pkg/fico"
@@ -20,18 +23,13 @@ type HostsConfig struct {
 	API configserver.HTTPServerConfig `yaml:"api,omitempty"`
 }
 
-// LoginRateLimitConfig holds rate-limiting configuration for the login endpoint.
-type LoginRateLimitConfig struct {
-	Enabled     bool   `yaml:"enabled"`
-	MaxAttempts int    `yaml:"max_attempts"`
-	Window      string `yaml:"window"` // duration string, e.g. "5m"
-}
-
 type Config struct {
-	DB        pgxdb.Config          `yaml:"db,omitempty"`
-	Hosts     HostsConfig           `yaml:"hosts,omitempty"`
-	Cron      configcron.CronConfig `yaml:"cron,omitempty"`
-	RateLimit LoginRateLimitConfig  `yaml:"rate_limit,omitempty"`
+	DB        pgxdb.Config                         `yaml:"db,omitempty"`
+	Hosts     HostsConfig                          `yaml:"hosts,omitempty"`
+	Cron      configcron.CronConfig                `yaml:"cron,omitempty"`
+	RateLimit configratelimit.LoginRateLimitConfig `yaml:"rate_limit,omitempty"`
+	Example   configexample.ExampleJobConfig       `yaml:"example,omitempty"`
+	Token     configcleantokens.TokenCleanupConfig `yaml:"token,omitempty"`
 }
 
 func New(fileName string) (Service, error) {

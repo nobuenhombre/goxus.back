@@ -1,11 +1,12 @@
 package examplejobs
 
 import (
+	configexample "goxus/src/internal/app/goxus/cron-job/jobs/example/config"
 	"log"
 
-	"github.com/nobuenhombre/suikat/pkg/ge"
-	"github.com/robfig/cron/v3"
 	domainapp "goxus/src/internal/app/goxus/domain"
+
+	"github.com/nobuenhombre/suikat/pkg/ge"
 )
 
 // Job implements cron.Job for the example scheduled task.
@@ -14,7 +15,7 @@ type Job struct {
 }
 
 // New creates a new example cron job.
-func New(dom domainapp.DomainService) (cron.Job, error) {
+func New(dom domainapp.DomainService, cfg *configexample.ExampleJobConfig) (*Job, error) {
 	if dom == nil {
 		return nil, ge.Pin(&ge.ServiceRequiredError{
 			ServiceName: "domainapp.DomainService",

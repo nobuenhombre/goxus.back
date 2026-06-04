@@ -7,7 +7,6 @@ import (
 
 	configserver "goxus/src/internal/app/goxus/api/server/config"
 	configcron "goxus/src/internal/app/goxus/cron-job/config"
-	configexample "goxus/src/internal/app/goxus/cron-job/jobs/example/config"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
 	"github.com/nobuenhombre/suikat/pkg/fico"
@@ -29,7 +28,7 @@ func getTestConfig() *Config {
 			},
 		},
 		Cron: configcron.CronConfig{
-			ExampleJob: configexample.ExampleJobConfig{
+			ExampleJob: configcron.CronJobConfig{
 				Enabled:  true,
 				Schedule: "@every 10m",
 			},
@@ -54,7 +53,7 @@ func getTestConfigWithDB() *Config {
 			},
 		},
 		Cron: configcron.CronConfig{
-			ExampleJob: configexample.ExampleJobConfig{
+			ExampleJob: configcron.CronJobConfig{
 				Enabled:  true,
 				Schedule: "@every 10m",
 			},

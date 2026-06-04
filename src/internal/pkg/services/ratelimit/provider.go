@@ -21,9 +21,10 @@ func ProvideRateLimiter(appConfig configapp.Service) (Service, func(), error) {
 		log.Println("Rate limiter service cleanup")
 	}
 
-	rlCfg := appConfig.Get().RateLimit
+	cfg := appConfig.Get().RateLimit
+	cfg.SetDefaults()
 
-	if !rlCfg.Enabled {
+	if !cfg.Enabled {
 		// disabled — provide a no-op rate limiter that always allows
 		return New(Config{
 			MaxAttempts: 0,
@@ -31,20 +32,13 @@ func ProvideRateLimiter(appConfig configapp.Service) (Service, func(), error) {
 		}), cleanup, nil
 	}
 
-	window, err := time.ParseDuration(rlCfg.Window)
+	window, err := time.ParseDuration(cfg.Window)
 	if err != nil {
 		return nil, cleanup, ge.Pin(err)
 	}
 
-	if rlCfg.MaxAttempts <= 0 {
-		rlCfg.MaxAttempts = 5
-	}
-	if window <= 0 {
-		window = 5 * time.Minute
-	}
-
 	svc := New(Config{
-		MaxAttempts: rlCfg.MaxAttempts,
+		MaxAttempts: cfg.MaxAttempts,
 		Window:      window,
 	})
 

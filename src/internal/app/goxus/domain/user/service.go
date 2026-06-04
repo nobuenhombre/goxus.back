@@ -79,4 +79,8 @@ type Service interface {
 	// RevokeRole removes a role from a user.
 	// Requires user_role_delete permission.
 	RevokeRole(ctx context.Context, userID int64, roleSlug string) error
+
+	// DeleteExpiredTokens soft-deletes all tokens older than ttlDays days.
+	// Internal system operation — no RBAC check.
+	DeleteExpiredTokens(ctx context.Context, ttlDays int) error
 }

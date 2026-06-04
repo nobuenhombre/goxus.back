@@ -14,6 +14,7 @@ type IUsersTokenRepository interface {
 	GetUsersTokenByID(id int64) (*UsersToken, error)
 	GetUsersTokenByToken(token string) (*UsersToken, error)
 	FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error)
+	DeleteExpiredTokens(ttlDays int) error
 }
 
 // Save saves the UsersToken to the database.
@@ -59,4 +60,8 @@ func (repo *UsersTokenRepository) GetUsersTokenByToken(token string) (*UsersToke
 // FindAllUsersTokensByUserID возвращает все записи по индексу 'users_tokens_user_id_index'.
 func (repo *UsersTokenRepository) FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error) {
 	return GetUsersTokensByUserID(repo.db, userID)
+}
+
+func (repo *UsersTokenRepository) DeleteExpiredTokens(ttlDays int) error {
+	return DeleteExpiredTokens(repo.db, ttlDays)
 }

@@ -297,7 +297,11 @@ Four tables:
 ### P1 — High
 
 5. - [x] Add rate limiting on login.
-6. - [ ] Add `expires_at` to `users_tokens` + a cleanup job.
+6. - [x] Add expires to `users_tokens` + a cleanup job.
+         создай настройку времени жизни токенов = 7 days. 
+         создай cronjob для soft_delete устаревших токенов. 
+         время жизни измеряется от last_used_at.
+
 7. - [ ] Add partial unique index: `users(email) WHERE deleted_at IS NULL`.
 8. - [ ] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
 9. - [ ] Add pagination (`limit`/`offset`) to `ListUsers`.

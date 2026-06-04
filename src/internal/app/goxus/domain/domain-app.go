@@ -37,6 +37,10 @@ type DomainService interface {
 	GetUserRoles(ctx context.Context, userID int64) ([]*goxus.RbacRole, error)
 	AssignUserRole(ctx context.Context, userID int64, roleSlug string) error
 	RevokeUserRole(ctx context.Context, userID int64, roleSlug string) error
+
+	// DeleteExpiredTokens soft-deletes all tokens older than ttlDays days.
+	// Internal system operation — used by cronjob, no RBAC.
+	DeleteExpiredTokens(ctx context.Context, ttlDays int) error
 }
 
 // AppDomain is the concrete implementation of DomainService.
@@ -114,4 +118,8 @@ func (d *AppDomain) AssignUserRole(ctx context.Context, userID int64, roleSlug s
 
 func (d *AppDomain) RevokeUserRole(ctx context.Context, userID int64, roleSlug string) error {
 	return d.User.RevokeRole(ctx, userID, roleSlug)
+}
+
+func (d *AppDomain) DeleteExpiredTokens(ctx context.Context, ttlDays int) error {
+	return d.User.DeleteExpiredTokens(ctx, ttlDays)
 }
