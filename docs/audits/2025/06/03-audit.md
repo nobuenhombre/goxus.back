@@ -303,7 +303,7 @@ Four tables:
          время жизни измеряется от last_used_at.
 
 7. - [x] Add unique index: `users(email)`.
-8. - [ ] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
+8. - [x] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
 9. - [ ] Add pagination (`limit`/`offset`) to `ListUsers`.
 10. - [ ] Switch to structured JSON logging (e.g., `slog` or `zap`).
 
@@ -321,7 +321,7 @@ Four tables:
 17. - [ ] Add OpenAPI/Swagger documentation.
 18. - [ ] Enhance health check with DB connectivity probe.
 19. - [ ] Add Prometheus metrics.
-20. - [ ] Define an API versioning strategy (v1 structure is ready).
+20. - [x] Define an API versioning strategy (v1 structure is ready).
 
 ---
 

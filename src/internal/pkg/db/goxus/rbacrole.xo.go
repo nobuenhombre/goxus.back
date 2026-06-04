@@ -390,3 +390,52 @@ WHERE
 }
 
 // ----- Index Methods for RbacRole -----
+
+// GetRolesByUserID runs a custom query, returning results as RbacRole.
+func GetRolesByUserID(db pgxdb.DBQuery, userID int64) ([]*RbacRole, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`r.id, r.name, r.slug, r.created_at, r.updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_roles r ` + "\n" +
+		`JOIN public.rbac_user_roles ur ON r.id = ur.role_id ` + "\n" +
+		`WHERE ` + "\n" +
+		`ur.user_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`r.id ASC`
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, userID)
+
+	db.WriteLog(sqlstr, time.Since(start), userID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacRole{}
+	for q.Next() {
+		rr := RbacRole{}
+
+		// scan
+		err = q.Scan(&rr.ID, &rr.Name, &rr.Slug, &rr.CreatedAt, &rr.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rr._exists = true
+		rr._deleted = false
+
+		res = append(res, &rr)
+	}
+
+	return res, nil
+}

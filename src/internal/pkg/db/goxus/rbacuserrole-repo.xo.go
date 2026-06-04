@@ -13,6 +13,7 @@ type IRbacUserRoleRepository interface {
 	GetLastID() (*RbacUserRole, error)
 	GetRbacUserRoleByID(id int64) (*RbacUserRole, error)
 	GetRbacUserRoleByUserIDRoleID(userID int64, roleID int64) (*RbacUserRole, error)
+	GetRbacUserRoleByRoleID(roleID int64) ([]*RbacUserRole, error)
 }
 
 // Save saves the RbacUserRole to the database.
@@ -53,4 +54,9 @@ func (repo *RbacUserRoleRepository) GetRbacUserRoleByID(id int64) (*RbacUserRole
 // GetRbacUserRoleByUserIDRoleID возвращает одну запись по индексу 'rbac_user_roles_unique'.
 func (repo *RbacUserRoleRepository) GetRbacUserRoleByUserIDRoleID(userID int64, roleID int64) (*RbacUserRole, error) {
 	return GetRbacUserRoleByUserIDRoleID(repo.db, userID, roleID)
+}
+
+// GetRbacUserRoleByRoleID runs a custom query, returning results as RbacUserRole.
+func (repo *RbacUserRoleRepository) GetRbacUserRoleByRoleID(roleID int64) ([]*RbacUserRole, error) {
+	return GetRbacUserRoleByRoleID(repo.db, roleID)
 }

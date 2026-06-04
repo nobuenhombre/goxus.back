@@ -185,39 +185,18 @@ func (s *impl) CheckUserRole(userID int64, roleSlug string) (bool, error) {
 
 // CheckUserPermission checks if a user has a given permission (via roles).
 func (s *impl) CheckUserPermission(userID int64, permSlug string) (bool, error) {
-	perm, err := s.repo.RbacPermission.GetRbacPermissionBySlug(permSlug)
+	// validate permission exists
+	_, err := s.repo.RbacPermission.GetRbacPermissionBySlug(permSlug)
 	if err != nil {
 		return false, ge.Pin(fmt.Errorf("permission '%s': %w", permSlug, ErrPermissionNotFound))
 	}
 
-	// get all roles for the user
-	userRoles, err := s.repo.RbacUserRole.GetAll()
+	perms, err := s.repo.RbacPermission.GetPermissionsByUserIDAndSlug(userID, permSlug)
 	if err != nil {
 		return false, ge.Pin(err)
 	}
 
-	// find user's roles
-	var roleIDs []int64
-	for _, ur := range userRoles {
-		if ur.UserID == userID {
-			roleIDs = append(roleIDs, ur.RoleID)
-		}
-	}
-
-	if len(roleIDs) == 0 {
-		return false, nil
-	}
-
-	// check if any of the user's roles has the permission
-	for _, roleID := range roleIDs {
-		rp, err := s.repo.RbacRolePermission.
-			GetRbacRolePermissionByRoleIDPermissionID(roleID, perm.ID)
-		if err == nil && rp != nil {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return len(perms) > 0, nil
 }
 
 // CheckRolePermission checks if a role has a given permission.
@@ -296,83 +275,32 @@ func (s *impl) GetAllRoles() ([]*goxus.RbacRole, error) {
 
 // GetUserRoles returns all roles assigned to a user.
 func (s *impl) GetUserRoles(userID int64) ([]*goxus.RbacRole, error) {
-	allUserRoles, err := s.repo.RbacUserRole.GetAll()
+	res, err := s.repo.RbacRole.GetRolesByUserID(userID)
 	if err != nil {
 		return nil, ge.Pin(err)
 	}
-
-	var roleIDs []int64
-	for _, ur := range allUserRoles {
-		if ur.UserID == userID {
-			roleIDs = append(roleIDs, ur.RoleID)
-		}
-	}
-
-	if len(roleIDs) == 0 {
+	if len(res) == 0 {
 		return nil, nil
 	}
-
-	allRoles, err := s.repo.RbacRole.GetAll()
-	if err != nil {
-		return nil, ge.Pin(err)
-	}
-
-	roleSet := make(map[int64]*goxus.RbacRole)
-	for _, r := range allRoles {
-		roleSet[r.ID] = r
-	}
-
-	var result []*goxus.RbacRole
-	for _, id := range roleIDs {
-		if r, ok := roleSet[id]; ok {
-			result = append(result, r)
-		}
-	}
-
-	return result, nil
+	return res, nil
 }
 
 // GetRolePermissions returns all permissions assigned to a role.
 func (s *impl) GetRolePermissions(roleSlug string) ([]*goxus.RbacPermission, error) {
-	role, err := s.repo.RbacRole.GetRbacRoleBySlug(roleSlug)
+	// validate role exists
+	_, err := s.repo.RbacRole.GetRbacRoleBySlug(roleSlug)
 	if err != nil {
 		return nil, ge.Pin(fmt.Errorf("role '%s': %w", roleSlug, ErrRoleNotFound))
 	}
 
-	allRolePerms, err := s.repo.RbacRolePermission.GetAll()
+	res, err := s.repo.RbacPermission.GetPermissionsByRoleSlug(roleSlug)
 	if err != nil {
 		return nil, ge.Pin(err)
 	}
-
-	var permIDs []int64
-	for _, rp := range allRolePerms {
-		if rp.RoleID == role.ID {
-			permIDs = append(permIDs, rp.PermissionID)
-		}
-	}
-
-	if len(permIDs) == 0 {
+	if len(res) == 0 {
 		return nil, nil
 	}
-
-	allPerms, err := s.repo.RbacPermission.GetAll()
-	if err != nil {
-		return nil, ge.Pin(err)
-	}
-
-	permSet := make(map[int64]*goxus.RbacPermission)
-	for _, p := range allPerms {
-		permSet[p.ID] = p
-	}
-
-	var result []*goxus.RbacPermission
-	for _, id := range permIDs {
-		if p, ok := permSet[id]; ok {
-			result = append(result, p)
-		}
-	}
-
-	return result, nil
+	return res, nil
 }
 
 // GetAllPermissions returns all permissions.
@@ -392,29 +320,25 @@ func (s *impl) DeleteRole(roleSlug string) error {
 	}
 
 	// check if any user has this role
-	allUserRoles, err := s.repo.RbacUserRole.GetAll()
+	userRoles, err := s.repo.RbacUserRole.GetRbacUserRoleByRoleID(role.ID)
 	if err != nil {
 		return ge.Pin(err)
 	}
 
-	for _, ur := range allUserRoles {
-		if ur.RoleID == role.ID {
-			return ge.Pin(fmt.Errorf("role '%s': %w", roleSlug, ErrRoleInUse))
-		}
+	if len(userRoles) > 0 {
+		return ge.Pin(fmt.Errorf("role '%s': %w", roleSlug, ErrRoleInUse))
 	}
 
 	// delete all role-permission links first
-	allRolePerms, err := s.repo.RbacRolePermission.GetAll()
+	rolePerms, err := s.repo.RbacRolePermission.GetRbacRolePermissionByRoleID(role.ID)
 	if err != nil {
 		return ge.Pin(err)
 	}
 
-	for _, rp := range allRolePerms {
-		if rp.RoleID == role.ID {
-			err = s.repo.RbacRolePermission.Delete(rp)
-			if err != nil {
-				return ge.Pin(err)
-			}
+	for _, rp := range rolePerms {
+		err = s.repo.RbacRolePermission.Delete(rp)
+		if err != nil {
+			return ge.Pin(err)
 		}
 	}
 
@@ -433,15 +357,13 @@ func (s *impl) DeletePermission(permSlug string) error {
 	}
 
 	// check if any role uses this permission
-	allRolePerms, err := s.repo.RbacRolePermission.GetAll()
+	rolePerms, err := s.repo.RbacRolePermission.GetRbacRolePermissionByPermissionID(perm.ID)
 	if err != nil {
 		return ge.Pin(err)
 	}
 
-	for _, rp := range allRolePerms {
-		if rp.PermissionID == perm.ID {
-			return ge.Pin(fmt.Errorf("permission '%s': %w", permSlug, ErrPermissionInUse))
-		}
+	if len(rolePerms) > 0 {
+		return ge.Pin(fmt.Errorf("permission '%s': %w", permSlug, ErrPermissionInUse))
 	}
 
 	err = s.repo.RbacPermission.Delete(perm)

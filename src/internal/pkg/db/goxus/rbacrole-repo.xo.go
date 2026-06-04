@@ -13,6 +13,7 @@ type IRbacRoleRepository interface {
 	GetLastID() (*RbacRole, error)
 	GetRbacRoleByID(id int64) (*RbacRole, error)
 	GetRbacRoleBySlug(slug string) (*RbacRole, error)
+	GetRolesByUserID(userID int64) ([]*RbacRole, error)
 }
 
 // Save saves the RbacRole to the database.
@@ -53,4 +54,9 @@ func (repo *RbacRoleRepository) GetRbacRoleByID(id int64) (*RbacRole, error) {
 // GetRbacRoleBySlug возвращает одну запись по индексу 'rbac_roles_slug_uindex'.
 func (repo *RbacRoleRepository) GetRbacRoleBySlug(slug string) (*RbacRole, error) {
 	return GetRbacRoleBySlug(repo.db, slug)
+}
+
+// GetRolesByUserID runs a custom query, returning results as RbacRole.
+func (repo *RbacRoleRepository) GetRolesByUserID(userID int64) ([]*RbacRole, error) {
+	return GetRolesByUserID(repo.db, userID)
 }

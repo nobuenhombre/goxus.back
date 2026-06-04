@@ -13,6 +13,8 @@ type IRbacRolePermissionRepository interface {
 	GetLastID() (*RbacRolePermission, error)
 	GetRbacRolePermissionByID(id int64) (*RbacRolePermission, error)
 	GetRbacRolePermissionByRoleIDPermissionID(roleID int64, permissionID int64) (*RbacRolePermission, error)
+	GetRbacRolePermissionByPermissionID(permissionID int64) ([]*RbacRolePermission, error)
+	GetRbacRolePermissionByRoleID(roleID int64) ([]*RbacRolePermission, error)
 }
 
 // Save saves the RbacRolePermission to the database.
@@ -53,4 +55,14 @@ func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByID(id int64) (*
 // GetRbacRolePermissionByRoleIDPermissionID возвращает одну запись по индексу 'rbac_role_permissions_unique'.
 func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleIDPermissionID(roleID int64, permissionID int64) (*RbacRolePermission, error) {
 	return GetRbacRolePermissionByRoleIDPermissionID(repo.db, roleID, permissionID)
+}
+
+// GetRbacRolePermissionByPermissionID runs a custom query, returning results as RbacRolePermission.
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByPermissionID(permissionID int64) ([]*RbacRolePermission, error) {
+	return GetRbacRolePermissionByPermissionID(repo.db, permissionID)
+}
+
+// GetRbacRolePermissionByRoleID runs a custom query, returning results as RbacRolePermission.
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleID(roleID int64) ([]*RbacRolePermission, error) {
+	return GetRbacRolePermissionByRoleID(repo.db, roleID)
 }

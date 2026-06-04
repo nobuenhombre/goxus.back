@@ -390,3 +390,104 @@ WHERE
 }
 
 // ----- Index Methods for RbacPermission -----
+
+// GetPermissionsByRoleSlug runs a custom query, returning results as RbacPermission.
+func GetPermissionsByRoleSlug(db pgxdb.DBQuery, roleSlug string) ([]*RbacPermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`p.id, p.name, p.slug, p.created_at, p.updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_permissions p ` + "\n" +
+		`JOIN public.rbac_role_permissions rp ON p.id = rp.permission_id ` + "\n" +
+		`JOIN public.rbac_roles r ON r.id = rp.role_id ` + "\n" +
+		`WHERE ` + "\n" +
+		`r.slug = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`p.id ASC`
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, roleSlug)
+
+	db.WriteLog(sqlstr, time.Since(start), roleSlug)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacPermission{}
+	for q.Next() {
+		rp := RbacPermission{}
+
+		// scan
+		err = q.Scan(&rp.ID, &rp.Name, &rp.Slug, &rp.CreatedAt, &rp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rp._exists = true
+		rp._deleted = false
+
+		res = append(res, &rp)
+	}
+
+	return res, nil
+}
+
+// GetPermissionsByUserIDAndSlug runs a custom query, returning results as RbacPermission.
+func GetPermissionsByUserIDAndSlug(db pgxdb.DBQuery, userID int64, permSlug string) ([]*RbacPermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`p.id, p.name, p.slug, p.created_at, p.updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_permissions p ` + "\n" +
+		`JOIN public.rbac_role_permissions rp ON p.id = rp.permission_id ` + "\n" +
+		`JOIN public.rbac_user_roles ur ON rp.role_id = ur.role_id ` + "\n" +
+		`WHERE ` + "\n" +
+		`ur.user_id = $1 ` + "\n" +
+		`AND p.slug = $2 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`p.id ASC`
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, userID, permSlug)
+
+	db.WriteLog(sqlstr, time.Since(start), userID, permSlug)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacPermission{}
+	for q.Next() {
+		rp := RbacPermission{}
+
+		// scan
+		err = q.Scan(&rp.ID, &rp.Name, &rp.Slug, &rp.CreatedAt, &rp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rp._exists = true
+		rp._deleted = false
+
+		res = append(res, &rp)
+	}
+
+	return res, nil
+}

@@ -404,3 +404,99 @@ WHERE
 }
 
 // ----- Index Methods for RbacRolePermission -----
+
+// GetRbacRolePermissionByPermissionID runs a custom query, returning results as RbacRolePermission.
+func GetRbacRolePermissionByPermissionID(db pgxdb.DBQuery, permissionID int64) ([]*RbacRolePermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`permission_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, permissionID)
+
+	db.WriteLog(sqlstr, time.Since(start), permissionID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacRolePermission{}
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rrp._exists = true
+		rrp._deleted = false
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}
+
+// GetRbacRolePermissionByRoleID runs a custom query, returning results as RbacRolePermission.
+func GetRbacRolePermissionByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacRolePermission, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`role_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	// run query
+	q, err := db.Query(ctx, sqlstr, roleID)
+
+	db.WriteLog(sqlstr, time.Since(start), roleID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*RbacRolePermission{}
+	for q.Next() {
+		rrp := RbacRolePermission{}
+
+		// scan
+		err = q.Scan(&rrp.ID, &rrp.RoleID, &rrp.PermissionID, &rrp.CreatedAt, &rrp.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rrp._exists = true
+		rrp._deleted = false
+
+		res = append(res, &rrp)
+	}
+
+	return res, nil
+}

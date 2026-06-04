@@ -13,6 +13,8 @@ type IRbacPermissionRepository interface {
 	GetLastID() (*RbacPermission, error)
 	GetRbacPermissionByID(id int64) (*RbacPermission, error)
 	GetRbacPermissionBySlug(slug string) (*RbacPermission, error)
+	GetPermissionsByRoleSlug(roleSlug string) ([]*RbacPermission, error)
+	GetPermissionsByUserIDAndSlug(userID int64, permSlug string) ([]*RbacPermission, error)
 }
 
 // Save saves the RbacPermission to the database.
@@ -53,4 +55,14 @@ func (repo *RbacPermissionRepository) GetRbacPermissionByID(id int64) (*RbacPerm
 // GetRbacPermissionBySlug возвращает одну запись по индексу 'rbac_permissions_slug_uindex'.
 func (repo *RbacPermissionRepository) GetRbacPermissionBySlug(slug string) (*RbacPermission, error) {
 	return GetRbacPermissionBySlug(repo.db, slug)
+}
+
+// GetPermissionsByRoleSlug runs a custom query, returning results as RbacPermission.
+func (repo *RbacPermissionRepository) GetPermissionsByRoleSlug(roleSlug string) ([]*RbacPermission, error) {
+	return GetPermissionsByRoleSlug(repo.db, roleSlug)
+}
+
+// GetPermissionsByUserIDAndSlug runs a custom query, returning results as RbacPermission.
+func (repo *RbacPermissionRepository) GetPermissionsByUserIDAndSlug(userID int64, permSlug string) ([]*RbacPermission, error) {
+	return GetPermissionsByUserIDAndSlug(repo.db, userID, permSlug)
 }
