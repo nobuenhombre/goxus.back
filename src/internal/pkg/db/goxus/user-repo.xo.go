@@ -13,6 +13,7 @@ type IUserRepository interface {
 	GetLastID() (*User, error)
 	GetUserByEmail(email string) (*User, error)
 	GetUserByID(id int64) (*User, error)
+	GetActiveUserByEmail(email string) (*User, error)
 }
 
 // Save saves the User to the database.
@@ -53,4 +54,9 @@ func (repo *UserRepository) GetUserByEmail(email string) (*User, error) {
 // GetUserByID возвращает одну запись по индексу 'users_pk'.
 func (repo *UserRepository) GetUserByID(id int64) (*User, error) {
 	return GetUserByID(repo.db, id)
+}
+
+// GetActiveUserByEmail runs a custom query, returning results as User.
+func (repo *UserRepository) GetActiveUserByEmail(email string) (*User, error) {
+	return GetActiveUserByEmail(repo.db, email)
 }

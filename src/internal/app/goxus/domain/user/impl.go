@@ -42,7 +42,7 @@ func New(dbRepo *goxus.DbGoxusRepo, rbacSvc rbac.Service) Service {
 
 // Create creates a new user.
 func (s *impl) Create(_ context.Context, name, email, password string) (*goxus.User, error) {
-	// check if email already taken
+	// check if email already taken (including soft-deleted — prevent restore conflicts)
 	existing, err := s.repo.User.GetUserByEmail(email)
 	if err == nil && existing != nil {
 		return nil, ge.Pin(fmt.Errorf("email '%s': %w", email, ErrEmailAlreadyTaken))
@@ -90,7 +90,7 @@ func (s *impl) Update(_ context.Context, id int64, name, email string) (*goxus.U
 		return nil, ge.Pin(fmt.Errorf("user id '%d': %w", id, ErrUserNotFound))
 	}
 
-	// if email changed, check it's not taken
+	// if email changed, check it's not taken (including soft-deleted — prevent restore conflicts)
 	if email != user.Email {
 		existing, err := s.repo.User.GetUserByEmail(email)
 		if err == nil && existing != nil {
@@ -206,18 +206,13 @@ func generateToken() string {
 
 // Login authenticates a user by email and password, and returns a token.
 func (s *impl) Login(_ context.Context, email, password string) (*goxus.User, *goxus.UsersToken, error) {
-	// find user by email
-	user, err := s.repo.User.GetUserByEmail(email)
+	// find active user by email (not soft-deleted)
+	user, err := s.repo.User.GetActiveUserByEmail(email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil, ge.Pin(ErrUserNotFound)
 		}
 		return nil, nil, ge.Pin(err)
-	}
-
-	// check soft-deleted
-	if user.DeletedAt.Valid {
-		return nil, nil, ge.Pin(ErrUserNotFound)
 	}
 
 	// verify password

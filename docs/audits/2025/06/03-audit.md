@@ -302,7 +302,7 @@ Four tables:
          создай cronjob для soft_delete устаревших токенов. 
          время жизни измеряется от last_used_at.
 
-7. - [ ] Add partial unique index: `users(email) WHERE deleted_at IS NULL`.
+7. - [x] Add unique index: `users(email)`.
 8. - [ ] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
 9. - [ ] Add pagination (`limit`/`offset`) to `ListUsers`.
 10. - [ ] Switch to structured JSON logging (e.g., `slog` or `zap`).

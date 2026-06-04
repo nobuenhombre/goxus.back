@@ -394,3 +394,36 @@ WHERE
 }
 
 // ----- Index Methods for User -----
+
+// GetActiveUserByEmail runs a custom query, returning results as User.
+func GetActiveUserByEmail(db pgxdb.DBQuery, email string) (*User, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, name, email, password, email_verified_at, created_at, updated_at, deleted_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.users ` + "\n" +
+		`WHERE ` + "\n" +
+		`email = $1 ` + "\n" +
+		`AND deleted_at IS NULL`
+
+	// run query
+	var u User
+	err = db.QueryRow(ctx, sqlstr, email).Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt)
+
+	db.WriteLog(sqlstr, time.Since(start), email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	u._exists = true
+	u._deleted = false
+
+	return &u, nil
+}
