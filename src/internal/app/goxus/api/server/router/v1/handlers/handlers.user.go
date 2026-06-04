@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -109,7 +110,20 @@ func (h *HttpHandler) ListUsers(c *gin.Context) {
 		return
 	}
 
-	users, err := h.Domain.ListUsers(ctx)
+	// Parse pagination query params
+	limit := userdomain.DefaultPageSize // default
+	l, err := strconv.Atoi(c.DefaultQuery("limit", fmt.Sprintf("%d", userdomain.DefaultPageSize)))
+	if err == nil && l > 0 {
+		limit = l
+	}
+
+	offset := 0
+	o, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err == nil && o >= 0 {
+		offset = o
+	}
+
+	users, total, err := h.Domain.ListUsers(ctx, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -121,8 +135,9 @@ func (h *HttpHandler) ListUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"version": "v1",
-		"data":    responses,
+		"version":     "v1",
+		"data":        responses,
+		"total_count": total,
 	})
 }
 

@@ -295,6 +295,27 @@ LIMIT $1 OFFSET $2
 	return res, nil
 }
 
+// GetAllUserCount returns count of all rows from 'public.users',
+func GetAllUserCount(db pgxdb.DBQuery) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `SELECT COUNT(*) FROM public.users`
+
+	var count int64
+	err := db.QueryRow(ctx, sqlstr).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetUsersBySQL returns rows from 'public.users' by your SQL,
 func GetUsersBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*User, error) {
 	ctx := context.Background()
@@ -360,6 +381,26 @@ func GetUsersBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, offset 
 	}
 
 	return res, nil
+}
+
+// GetUsersBySQLCount returns count of rows from 'public.users' by your SQL,
+func GetUsersBySQLCount(db pgxdb.DBQuery, sqlstr string, args ...any) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	var count int64
+	err := db.QueryRow(ctx, countSQL, args...).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetLastUser returns last row from 'public.users',
@@ -433,6 +474,38 @@ WHERE
 	return &u, nil
 }
 
+// GetUserByEmailCount retrieves count of rows from 'public.users' by index 'users_email_uindex'.
+func GetUserByEmailCount(db pgxdb.DBQuery, email string) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.users
+WHERE
+	email = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, email).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), email)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // ----- Index Methods for User -----
 
 // UserByID retrieves a row from 'public.users' as a User.
@@ -472,6 +545,38 @@ WHERE
 	return &u, nil
 }
 
+// GetUserByIDCount retrieves count of rows from 'public.users' by index 'users_pk'.
+func GetUserByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.users
+WHERE
+	id = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // ----- Index Methods for User -----
 
 // GetActiveUserByEmail runs a custom query, returning results as User.
@@ -505,4 +610,36 @@ func GetActiveUserByEmail(db pgxdb.DBQuery, email string) (*User, error) {
 	u._deleted = false
 
 	return &u, nil
+}
+
+// GetActiveUserByEmailCount runs a custom count query
+func GetActiveUserByEmailCount(db pgxdb.DBQuery, email string) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, name, email, password, email_verified_at, created_at, updated_at, deleted_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.users ` + "\n" +
+		`WHERE ` + "\n" +
+		`email = $1 ` + "\n" +
+		`AND deleted_at IS NULL`
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, countSQL, email).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), email)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

@@ -11,13 +11,18 @@ type IUsersTokenRepository interface {
 	Delete(ut *UsersToken) error
 	GetAll() ([]*UsersToken, error)
 	GetAllWithPagination(limit, offset int) ([]*UsersToken, error)
+	GetAllCount() (int64, error)
 	GetBySQL(sqlstr string, args ...any) ([]*UsersToken, error)
 	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*UsersToken, error)
+	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*UsersToken, error)
 	GetUsersTokenByID(id int64) (*UsersToken, error)
+	GetUsersTokenByIDCount(id int64) (int64, error)
 	GetUsersTokenByToken(token string) (*UsersToken, error)
+	GetUsersTokenByTokenCount(token string) (int64, error)
 	FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error)
 	FindAllUsersTokensByUserIDWithPagination(userID int64, limit, offset int) ([]*UsersToken, error)
+	FindAllUsersTokensByUserIDCount(userID int64) (int64, error)
 	DeleteExpiredTokens(ttlDays int) error
 }
 
@@ -51,6 +56,11 @@ func (repo *UsersTokenRepository) GetAllWithPagination(limit, offset int) ([]*Us
 	return GetAllUsersTokenWithPagination(repo.db, limit, offset)
 }
 
+// GetAllCount возвращает количество записей
+func (repo *UsersTokenRepository) GetAllCount() (int64, error) {
+	return GetAllUsersTokenCount(repo.db)
+}
+
 // GetBySQL возвращает записи по произвольному SQL
 func (repo *UsersTokenRepository) GetBySQL(sqlstr string, args ...any) ([]*UsersToken, error) {
 	return GetUsersTokensBySQL(repo.db, sqlstr, args...)
@@ -59,6 +69,11 @@ func (repo *UsersTokenRepository) GetBySQL(sqlstr string, args ...any) ([]*Users
 // GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
 func (repo *UsersTokenRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*UsersToken, error) {
 	return GetUsersTokensBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
+}
+
+// GetBySQLCount возвращает количество записей по произвольному SQL
+func (repo *UsersTokenRepository) GetBySQLCount(sqlstr string, args ...any) (int64, error) {
+	return GetUsersTokensBySQLCount(repo.db, sqlstr, args...)
 }
 
 // GetLastID возвращает последний ID
@@ -71,9 +86,19 @@ func (repo *UsersTokenRepository) GetUsersTokenByID(id int64) (*UsersToken, erro
 	return GetUsersTokenByID(repo.db, id)
 }
 
+// GetUsersTokenByIDCount возвращает количество записей по индексу 'users_tokens_pk'.
+func (repo *UsersTokenRepository) GetUsersTokenByIDCount(id int64) (int64, error) {
+	return GetUsersTokenByIDCount(repo.db, id)
+}
+
 // GetUsersTokenByToken возвращает одну запись по индексу 'users_tokens_token_uindex'.
 func (repo *UsersTokenRepository) GetUsersTokenByToken(token string) (*UsersToken, error) {
 	return GetUsersTokenByToken(repo.db, token)
+}
+
+// GetUsersTokenByTokenCount возвращает количество записей по индексу 'users_tokens_token_uindex'.
+func (repo *UsersTokenRepository) GetUsersTokenByTokenCount(token string) (int64, error) {
+	return GetUsersTokenByTokenCount(repo.db, token)
 }
 
 // FindAllUsersTokensByUserID возвращает все записи по индексу 'users_tokens_user_id_index'.
@@ -84,6 +109,11 @@ func (repo *UsersTokenRepository) FindAllUsersTokensByUserID(userID int64) ([]*U
 // FindAllUsersTokensByUserIDWithPagination возвращает записи по индексу с пагинацией
 func (repo *UsersTokenRepository) FindAllUsersTokensByUserIDWithPagination(userID int64, limit, offset int) ([]*UsersToken, error) {
 	return GetUsersTokensByUserIDWithPagination(repo.db, userID, limit, offset)
+}
+
+// FindAllUsersTokensByUserIDCount возвращает количество записей по индексу 'users_tokens_user_id_index'.
+func (repo *UsersTokenRepository) FindAllUsersTokensByUserIDCount(userID int64) (int64, error) {
+	return GetUsersTokensByUserIDCount(repo.db, userID)
 }
 
 func (repo *UsersTokenRepository) DeleteExpiredTokens(ttlDays int) error {

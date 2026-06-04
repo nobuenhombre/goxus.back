@@ -45,22 +45,22 @@ func (a *authorizedService) Create(ctx context.Context, name, email, password st
 	return a.inner.Create(ctx, name, email, password)
 }
 
-// List returns all users. Requires user_view permission.
-func (a *authorizedService) List(ctx context.Context) ([]*goxus.User, error) {
+// List returns users with pagination. Requires user_view permission.
+func (a *authorizedService) List(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
 	actorID, ok := ActorIDFromContext(ctx)
 	if !ok {
-		return nil, ge.Pin(ErrAccessDenied)
+		return nil, 0, ge.Pin(ErrAccessDenied)
 	}
 
 	ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserView)
 	if err != nil {
-		return nil, ge.Pin(err)
+		return nil, 0, ge.Pin(err)
 	}
 	if !ok {
-		return nil, ge.Pin(ErrAccessDenied)
+		return nil, 0, ge.Pin(ErrAccessDenied)
 	}
 
-	return a.inner.List(ctx)
+	return a.inner.List(ctx, limit, offset)
 }
 
 // GetByID returns a single user by ID.

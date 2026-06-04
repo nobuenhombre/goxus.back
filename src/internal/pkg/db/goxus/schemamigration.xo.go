@@ -288,6 +288,27 @@ LIMIT $1 OFFSET $2
 	return res, nil
 }
 
+// GetAllSchemaMigrationCount returns count of all rows from 'public.schema_migrations',
+func GetAllSchemaMigrationCount(db pgxdb.DBQuery) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `SELECT COUNT(*) FROM public.schema_migrations`
+
+	var count int64
+	err := db.QueryRow(ctx, sqlstr).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetSchemaMigrationsBySQL returns rows from 'public.schema_migrations' by your SQL,
 func GetSchemaMigrationsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*SchemaMigration, error) {
 	ctx := context.Background()
@@ -353,6 +374,26 @@ func GetSchemaMigrationsBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, lim
 	}
 
 	return res, nil
+}
+
+// GetSchemaMigrationsBySQLCount returns count of rows from 'public.schema_migrations' by your SQL,
+func GetSchemaMigrationsBySQLCount(db pgxdb.DBQuery, sqlstr string, args ...any) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	var count int64
+	err := db.QueryRow(ctx, countSQL, args...).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetLastSchemaMigration returns last row from 'public.schema_migrations',
@@ -424,6 +465,38 @@ WHERE
 	}
 
 	return &sm, nil
+}
+
+// GetSchemaMigrationByVersionCount retrieves count of rows from 'public.schema_migrations' by index 'schema_migrations_pkey'.
+func GetSchemaMigrationByVersionCount(db pgxdb.DBQuery, version int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.schema_migrations
+WHERE
+	version = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, version).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), version)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // ----- Index Methods for SchemaMigration -----

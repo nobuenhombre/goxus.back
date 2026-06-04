@@ -11,14 +11,20 @@ type IRbacRolePermissionRepository interface {
 	Delete(rrp *RbacRolePermission) error
 	GetAll() ([]*RbacRolePermission, error)
 	GetAllWithPagination(limit, offset int) ([]*RbacRolePermission, error)
+	GetAllCount() (int64, error)
 	GetBySQL(sqlstr string, args ...any) ([]*RbacRolePermission, error)
 	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacRolePermission, error)
+	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*RbacRolePermission, error)
 	GetRbacRolePermissionByID(id int64) (*RbacRolePermission, error)
+	GetRbacRolePermissionByIDCount(id int64) (int64, error)
 	GetRbacRolePermissionByRoleIDPermissionID(roleID int64, permissionID int64) (*RbacRolePermission, error)
+	GetRbacRolePermissionByRoleIDPermissionIDCount(roleID int64, permissionID int64) (int64, error)
 	GetRbacRolePermissionByPermissionID(permissionID int64) ([]*RbacRolePermission, error)
+	GetRbacRolePermissionByPermissionIDCount(permissionID int64) (int64, error)
 	GetRbacRolePermissionByPermissionIDWithPagination(permissionID int64, limit, offset int) ([]*RbacRolePermission, error)
 	GetRbacRolePermissionByRoleID(roleID int64) ([]*RbacRolePermission, error)
+	GetRbacRolePermissionByRoleIDCount(roleID int64) (int64, error)
 	GetRbacRolePermissionByRoleIDWithPagination(roleID int64, limit, offset int) ([]*RbacRolePermission, error)
 }
 
@@ -52,6 +58,11 @@ func (repo *RbacRolePermissionRepository) GetAllWithPagination(limit, offset int
 	return GetAllRbacRolePermissionWithPagination(repo.db, limit, offset)
 }
 
+// GetAllCount возвращает количество записей
+func (repo *RbacRolePermissionRepository) GetAllCount() (int64, error) {
+	return GetAllRbacRolePermissionCount(repo.db)
+}
+
 // GetBySQL возвращает записи по произвольному SQL
 func (repo *RbacRolePermissionRepository) GetBySQL(sqlstr string, args ...any) ([]*RbacRolePermission, error) {
 	return GetRbacRolePermissionsBySQL(repo.db, sqlstr, args...)
@@ -60,6 +71,11 @@ func (repo *RbacRolePermissionRepository) GetBySQL(sqlstr string, args ...any) (
 // GetBySQLWithPagination возвращает записи по произвольному SQL с пагинацией
 func (repo *RbacRolePermissionRepository) GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*RbacRolePermission, error) {
 	return GetRbacRolePermissionsBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
+}
+
+// GetBySQLCount возвращает количество записей по произвольному SQL
+func (repo *RbacRolePermissionRepository) GetBySQLCount(sqlstr string, args ...any) (int64, error) {
+	return GetRbacRolePermissionsBySQLCount(repo.db, sqlstr, args...)
 }
 
 // GetLastID возвращает последний ID
@@ -72,14 +88,29 @@ func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByID(id int64) (*
 	return GetRbacRolePermissionByID(repo.db, id)
 }
 
+// GetRbacRolePermissionByIDCount возвращает количество записей по индексу 'rbac_role_permissions_pk'.
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByIDCount(id int64) (int64, error) {
+	return GetRbacRolePermissionByIDCount(repo.db, id)
+}
+
 // GetRbacRolePermissionByRoleIDPermissionID возвращает одну запись по индексу 'rbac_role_permissions_unique'.
 func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleIDPermissionID(roleID int64, permissionID int64) (*RbacRolePermission, error) {
 	return GetRbacRolePermissionByRoleIDPermissionID(repo.db, roleID, permissionID)
 }
 
+// GetRbacRolePermissionByRoleIDPermissionIDCount возвращает количество записей по индексу 'rbac_role_permissions_unique'.
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleIDPermissionIDCount(roleID int64, permissionID int64) (int64, error) {
+	return GetRbacRolePermissionByRoleIDPermissionIDCount(repo.db, roleID, permissionID)
+}
+
 // GetRbacRolePermissionByPermissionID runs a custom query, returning results as RbacRolePermission.
 func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByPermissionID(permissionID int64) ([]*RbacRolePermission, error) {
 	return GetRbacRolePermissionByPermissionID(repo.db, permissionID)
+}
+
+// GetRbacRolePermissionByPermissionIDCount runs a custom count query from repository
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByPermissionIDCount(permissionID int64) (int64, error) {
+	return GetRbacRolePermissionByPermissionIDCount(repo.db, permissionID)
 }
 
 // GetRbacRolePermissionByPermissionIDWithPagination runs a custom query with pagination from repository
@@ -90,6 +121,11 @@ func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByPermissionIDWit
 // GetRbacRolePermissionByRoleID runs a custom query, returning results as RbacRolePermission.
 func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleID(roleID int64) ([]*RbacRolePermission, error) {
 	return GetRbacRolePermissionByRoleID(repo.db, roleID)
+}
+
+// GetRbacRolePermissionByRoleIDCount runs a custom count query from repository
+func (repo *RbacRolePermissionRepository) GetRbacRolePermissionByRoleIDCount(roleID int64) (int64, error) {
+	return GetRbacRolePermissionByRoleIDCount(repo.db, roleID)
 }
 
 // GetRbacRolePermissionByRoleIDWithPagination runs a custom query with pagination from repository

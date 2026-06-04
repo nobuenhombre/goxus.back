@@ -304,7 +304,7 @@ Four tables:
 
 7. - [x] Add unique index: `users(email)`.
 8. - [x] Replace `GetAll()` with targeted SQL (`JOIN` + `WHERE`) in RBAC checks.
-9. - [ ] Add pagination (`limit`/`offset`) to `ListUsers`.
+9. - [x] Add pagination (`limit`/`offset`) to `ListUsers`.
 10. - [ ] Switch to structured JSON logging (e.g., `slog` or `zap`).
 
 ### P2 — Medium

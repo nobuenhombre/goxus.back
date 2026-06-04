@@ -58,7 +58,7 @@ func TestAuthorizedCreate_WithPermission(t *testing.T) {
 func TestAuthorizedList_NoActorID(t *testing.T) {
 	fx := setupTest(t)
 
-	_, err := fx.svc.List(context.Background())
+	_, _, err := fx.svc.List(context.Background(), 0, 0)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "access denied")
 }
@@ -70,7 +70,7 @@ func TestAuthorizedList_NoPermission(t *testing.T) {
 	err := fx.rbacSvc.CreatePermission(permission.UserView, permission.UserView)
 	require.NoError(t, err)
 
-	_, err = fx.svc.List(actorCtx(actorID))
+	_, _, err = fx.svc.List(actorCtx(actorID), 0, 0)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "access denied")
 }
@@ -80,7 +80,7 @@ func TestAuthorizedList_WithPermission(t *testing.T) {
 	actorID := createActor(t, fx)
 	grantPermission(t, fx, actorID, permission.UserView)
 
-	users, err := fx.svc.List(actorCtx(actorID))
+	users, _, err := fx.svc.List(actorCtx(actorID), 0, 0)
 	require.NoError(t, err)
 	// List returns the actor user (created by createActor)
 	assert.Len(t, users, 1)

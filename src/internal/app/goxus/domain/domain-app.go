@@ -20,7 +20,10 @@ type DomainService interface {
 	// ---- User domain ----
 
 	CreateUser(ctx context.Context, name, email, password string) (*goxus.User, error)
-	ListUsers(ctx context.Context) ([]*goxus.User, error)
+	// ListUsers returns users with pagination and total count.
+	// limit=0 returns the default page size (50).
+	// offset=0 starts from the beginning.
+	ListUsers(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error)
 	GetUser(ctx context.Context, id int64) (*goxus.User, error)
 	UpdateUser(ctx context.Context, id int64, name, email string) (*goxus.User, error)
 	DeleteUser(ctx context.Context, id int64) error
@@ -76,8 +79,8 @@ func (d *AppDomain) CreateUser(ctx context.Context, name, email, password string
 	return d.User.Create(ctx, name, email, password)
 }
 
-func (d *AppDomain) ListUsers(ctx context.Context) ([]*goxus.User, error) {
-	return d.User.List(ctx)
+func (d *AppDomain) ListUsers(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
+	return d.User.List(ctx, limit, offset)
 }
 
 func (d *AppDomain) GetUser(ctx context.Context, id int64) (*goxus.User, error) {

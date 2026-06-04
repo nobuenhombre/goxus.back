@@ -11,10 +11,13 @@ type ISchemaMigrationRepository interface {
 	Delete(sm *SchemaMigration) error
 	GetAll() ([]*SchemaMigration, error)
 	GetAllWithPagination(limit, offset int) ([]*SchemaMigration, error)
+	GetAllCount() (int64, error)
 	GetBySQL(sqlstr string, args ...any) ([]*SchemaMigration, error)
 	GetBySQLWithPagination(sqlstr string, limit, offset int, args ...any) ([]*SchemaMigration, error)
+	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*SchemaMigration, error)
 	GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error)
+	GetSchemaMigrationByVersionCount(version int64) (int64, error)
 }
 
 // Save saves the SchemaMigration to the database.
@@ -47,6 +50,11 @@ func (repo *SchemaMigrationRepository) GetAllWithPagination(limit, offset int) (
 	return GetAllSchemaMigrationWithPagination(repo.db, limit, offset)
 }
 
+// GetAllCount возвращает количество записей
+func (repo *SchemaMigrationRepository) GetAllCount() (int64, error) {
+	return GetAllSchemaMigrationCount(repo.db)
+}
+
 // GetBySQL возвращает записи по произвольному SQL
 func (repo *SchemaMigrationRepository) GetBySQL(sqlstr string, args ...any) ([]*SchemaMigration, error) {
 	return GetSchemaMigrationsBySQL(repo.db, sqlstr, args...)
@@ -57,6 +65,11 @@ func (repo *SchemaMigrationRepository) GetBySQLWithPagination(sqlstr string, lim
 	return GetSchemaMigrationsBySQLWithPagination(repo.db, sqlstr, limit, offset, args...)
 }
 
+// GetBySQLCount возвращает количество записей по произвольному SQL
+func (repo *SchemaMigrationRepository) GetBySQLCount(sqlstr string, args ...any) (int64, error) {
+	return GetSchemaMigrationsBySQLCount(repo.db, sqlstr, args...)
+}
+
 // GetLastID возвращает последний ID
 func (repo *SchemaMigrationRepository) GetLastID() (*SchemaMigration, error) {
 	return GetLastIDSchemaMigration(repo.db)
@@ -65,4 +78,9 @@ func (repo *SchemaMigrationRepository) GetLastID() (*SchemaMigration, error) {
 // GetSchemaMigrationByVersion возвращает одну запись по индексу 'schema_migrations_pkey'.
 func (repo *SchemaMigrationRepository) GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error) {
 	return GetSchemaMigrationByVersion(repo.db, version)
+}
+
+// GetSchemaMigrationByVersionCount возвращает количество записей по индексу 'schema_migrations_pkey'.
+func (repo *SchemaMigrationRepository) GetSchemaMigrationByVersionCount(version int64) (int64, error) {
+	return GetSchemaMigrationByVersionCount(repo.db, version)
 }

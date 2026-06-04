@@ -37,9 +37,11 @@ type Service interface {
 	// Requires user_add permission.
 	Create(ctx context.Context, name, email, password string) (*goxus.User, error)
 
-	// List returns all users.
+	// List returns users with pagination and total count.
+	// limit=0 returns the default page size (50).
+	// offset=0 starts from the beginning.
 	// Requires user_view permission.
-	List(ctx context.Context) ([]*goxus.User, error)
+	List(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error)
 
 	// GetByID returns a single user by ID.
 	// Requires user_view permission (except when actorID == id).

@@ -294,6 +294,27 @@ LIMIT $1 OFFSET $2
 	return res, nil
 }
 
+// GetAllUsersTokenCount returns count of all rows from 'public.users_tokens',
+func GetAllUsersTokenCount(db pgxdb.DBQuery) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `SELECT COUNT(*) FROM public.users_tokens`
+
+	var count int64
+	err := db.QueryRow(ctx, sqlstr).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetUsersTokensBySQL returns rows from 'public.users_tokens' by your SQL,
 func GetUsersTokensBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*UsersToken, error) {
 	ctx := context.Background()
@@ -359,6 +380,26 @@ func GetUsersTokensBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit, o
 	}
 
 	return res, nil
+}
+
+// GetUsersTokensBySQLCount returns count of rows from 'public.users_tokens' by your SQL,
+func GetUsersTokensBySQLCount(db pgxdb.DBQuery, sqlstr string, args ...any) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	var count int64
+	err := db.QueryRow(ctx, countSQL, args...).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetLastUsersToken returns last row from 'public.users_tokens',
@@ -439,6 +480,38 @@ WHERE
 	return &ut, nil
 }
 
+// GetUsersTokenByIDCount retrieves count of rows from 'public.users_tokens' by index 'users_tokens_pk'.
+func GetUsersTokenByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.users_tokens
+WHERE
+	id = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // ----- Index Methods for UsersToken -----
 
 // UsersTokenByToken retrieves a row from 'public.users_tokens' as a UsersToken.
@@ -476,6 +549,38 @@ WHERE
 	}
 
 	return &ut, nil
+}
+
+// GetUsersTokenByTokenCount retrieves count of rows from 'public.users_tokens' by index 'users_tokens_token_uindex'.
+func GetUsersTokenByTokenCount(db pgxdb.DBQuery, token string) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.users_tokens
+WHERE
+	token = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, token).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), token)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // ----- Index Methods for UsersToken -----
@@ -584,6 +689,38 @@ ORDER BY
 	}
 
 	return res, nil
+}
+
+// GetUsersTokensByUserIDCount retrieves count of rows from 'public.users_tokens' by index 'users_tokens_user_id_index'.
+func GetUsersTokensByUserIDCount(db pgxdb.DBQuery, userID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.users_tokens
+WHERE
+	user_id = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, userID).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), userID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // ----- Index Methods for UsersToken -----

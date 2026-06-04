@@ -15,6 +15,8 @@ import (
 	"goxus/src/internal/pkg/services/rbac"
 )
 
+const DefaultPageSize = 10
+
 var (
 	ErrUserNotFound       = errors.New("user not found")
 	ErrEmailAlreadyTaken  = errors.New("email already taken")
@@ -65,13 +67,26 @@ func (s *impl) Create(_ context.Context, name, email, password string) (*goxus.U
 	return user, nil
 }
 
-// List returns all users.
-func (s *impl) List(_ context.Context) ([]*goxus.User, error) {
-	users, err := s.repo.User.GetAll()
-	if err != nil {
-		return nil, ge.Pin(err)
+// List returns users with pagination and total count.
+func (s *impl) List(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
+	if limit <= 0 {
+		limit = DefaultPageSize
 	}
-	return users, nil
+	if offset < 0 {
+		offset = 0
+	}
+
+	users, err := s.repo.User.GetAllWithPagination(limit, offset)
+	if err != nil {
+		return nil, 0, ge.Pin(err)
+	}
+
+	total, err := s.repo.User.GetAllCount()
+	if err != nil {
+		return nil, 0, ge.Pin(err)
+	}
+
+	return users, total, nil
 }
 
 // GetByID returns a single user by ID.

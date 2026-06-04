@@ -291,6 +291,27 @@ LIMIT $1 OFFSET $2
 	return res, nil
 }
 
+// GetAllRbacUserRoleCount returns count of all rows from 'public.rbac_user_roles',
+func GetAllRbacUserRoleCount(db pgxdb.DBQuery) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `SELECT COUNT(*) FROM public.rbac_user_roles`
+
+	var count int64
+	err := db.QueryRow(ctx, sqlstr).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetRbacUserRolesBySQL returns rows from 'public.rbac_user_roles' by your SQL,
 func GetRbacUserRolesBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*RbacUserRole, error) {
 	ctx := context.Background()
@@ -356,6 +377,26 @@ func GetRbacUserRolesBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, limit,
 	}
 
 	return res, nil
+}
+
+// GetRbacUserRolesBySQLCount returns count of rows from 'public.rbac_user_roles' by your SQL,
+func GetRbacUserRolesBySQLCount(db pgxdb.DBQuery, sqlstr string, args ...any) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	var count int64
+	err := db.QueryRow(ctx, countSQL, args...).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetLastRbacUserRole returns last row from 'public.rbac_user_roles',
@@ -443,6 +484,38 @@ WHERE
 	return &rur, nil
 }
 
+// GetRbacUserRoleByIDCount retrieves count of rows from 'public.rbac_user_roles' by index 'rbac_user_roles_pk'.
+func GetRbacUserRoleByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.rbac_user_roles
+WHERE
+	id = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // ----- Index Methods for RbacUserRole -----
 
 // RbacUserRoleByUserIDRoleID retrieves a row from 'public.rbac_user_roles' as a RbacUserRole.
@@ -480,6 +553,38 @@ WHERE
 	}
 
 	return &rur, nil
+}
+
+// GetRbacUserRoleByUserIDRoleIDCount retrieves count of rows from 'public.rbac_user_roles' by index 'rbac_user_roles_unique'.
+func GetRbacUserRoleByUserIDRoleIDCount(db pgxdb.DBQuery, userID int64, roleID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.rbac_user_roles
+WHERE
+	user_id = $1 AND role_id = $2
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, userID, roleID).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), userID, roleID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // ----- Index Methods for RbacUserRole -----
@@ -530,6 +635,39 @@ func GetRbacUserRoleByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacUserRole, e
 	}
 
 	return res, nil
+}
+
+// GetRbacUserRoleByRoleIDCount runs a custom count query
+func GetRbacUserRoleByRoleIDCount(db pgxdb.DBQuery, roleID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, user_id, role_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_user_roles ` + "\n" +
+		`WHERE ` + "\n" +
+		`role_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, countSQL, roleID).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), roleID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetRbacUserRoleByRoleIDWithPagination runs a custom query with pagination

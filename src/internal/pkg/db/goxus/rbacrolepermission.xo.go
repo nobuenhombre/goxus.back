@@ -291,6 +291,27 @@ LIMIT $1 OFFSET $2
 	return res, nil
 }
 
+// GetAllRbacRolePermissionCount returns count of all rows from 'public.rbac_role_permissions',
+func GetAllRbacRolePermissionCount(db pgxdb.DBQuery) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	// language=SQL
+	const sqlstr = `SELECT COUNT(*) FROM public.rbac_role_permissions`
+
+	var count int64
+	err := db.QueryRow(ctx, sqlstr).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetRbacRolePermissionsBySQL returns rows from 'public.rbac_role_permissions' by your SQL,
 func GetRbacRolePermissionsBySQL(db pgxdb.DBQuery, sqlstr string, args ...any) ([]*RbacRolePermission, error) {
 	ctx := context.Background()
@@ -356,6 +377,26 @@ func GetRbacRolePermissionsBySQLWithPagination(db pgxdb.DBQuery, sqlstr string, 
 	}
 
 	return res, nil
+}
+
+// GetRbacRolePermissionsBySQLCount returns count of rows from 'public.rbac_role_permissions' by your SQL,
+func GetRbacRolePermissionsBySQLCount(db pgxdb.DBQuery, sqlstr string, args ...any) (int64, error) {
+	ctx := context.Background()
+
+	start := time.Now()
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	var count int64
+	err := db.QueryRow(ctx, countSQL, args...).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetLastRbacRolePermission returns last row from 'public.rbac_role_permissions',
@@ -443,6 +484,38 @@ WHERE
 	return &rrp, nil
 }
 
+// GetRbacRolePermissionByIDCount retrieves count of rows from 'public.rbac_role_permissions' by index 'rbac_role_permissions_pk'.
+func GetRbacRolePermissionByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.rbac_role_permissions
+WHERE
+	id = $1
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // ----- Index Methods for RbacRolePermission -----
 
 // RbacRolePermissionByRoleIDPermissionID retrieves a row from 'public.rbac_role_permissions' as a RbacRolePermission.
@@ -480,6 +553,38 @@ WHERE
 	}
 
 	return &rrp, nil
+}
+
+// GetRbacRolePermissionByRoleIDPermissionIDCount retrieves count of rows from 'public.rbac_role_permissions' by index 'rbac_role_permissions_unique'.
+func GetRbacRolePermissionByRoleIDPermissionIDCount(db pgxdb.DBQuery, roleID int64, permissionID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	// language=SQL
+	const sqlstr = `
+SELECT
+	COUNT(*)
+FROM
+	public.rbac_role_permissions
+WHERE
+	role_id = $1 AND permission_id = $2
+`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, sqlstr, roleID, permissionID).Scan(&count)
+
+	db.WriteLog(sqlstr, time.Since(start), roleID, permissionID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // ----- Index Methods for RbacRolePermission -----
@@ -530,6 +635,39 @@ func GetRbacRolePermissionByPermissionID(db pgxdb.DBQuery, permissionID int64) (
 	}
 
 	return res, nil
+}
+
+// GetRbacRolePermissionByPermissionIDCount runs a custom count query
+func GetRbacRolePermissionByPermissionIDCount(db pgxdb.DBQuery, permissionID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`permission_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, countSQL, permissionID).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), permissionID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetRbacRolePermissionByPermissionIDWithPagination runs a custom query with pagination
@@ -628,6 +766,39 @@ func GetRbacRolePermissionByRoleID(db pgxdb.DBQuery, roleID int64) ([]*RbacRoleP
 	}
 
 	return res, nil
+}
+
+// GetRbacRolePermissionByRoleIDCount runs a custom count query
+func GetRbacRolePermissionByRoleIDCount(db pgxdb.DBQuery, roleID int64) (int64, error) {
+	var err error
+
+	start := time.Now()
+
+	ctx := context.Background()
+
+	// sql query
+	var sqlstr = `SELECT ` + "\n" +
+		`id, role_id, permission_id, created_at, updated_at ` + "\n" +
+		`FROM ` + "\n" +
+		`public.rbac_role_permissions ` + "\n" +
+		`WHERE ` + "\n" +
+		`role_id = $1 ` + "\n" +
+		`ORDER BY ` + "\n" +
+		`id ASC`
+
+	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
+
+	// run query
+	var count int64
+	err = db.QueryRow(ctx, countSQL, roleID).Scan(&count)
+
+	db.WriteLog(countSQL, time.Since(start), roleID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GetRbacRolePermissionByRoleIDWithPagination runs a custom query with pagination

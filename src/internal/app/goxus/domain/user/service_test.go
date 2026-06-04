@@ -48,16 +48,17 @@ func TestCreate_DuplicateEmail(t *testing.T) {
 // List
 // ---------------------------------------------------------------------------
 
-// TestList_Empty verifies GetAll returns an empty slice when no users exist.
+// TestList_Empty verifies List returns an empty slice when no users exist.
 func TestList_Empty(t *testing.T) {
 	fx := setupTest(t)
 
-	users, err := fx.raw.List(context.Background())
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
 	require.NoError(t, err)
 	assert.Len(t, users, 0)
+	assert.Equal(t, int64(0), total)
 }
 
-// TestList_Multiple verifies that multiple users are returned.
+// TestList_Multiple verifies that multiple users are returned with default pagination.
 func TestList_Multiple(t *testing.T) {
 	fx := setupTest(t)
 
@@ -66,9 +67,42 @@ func TestList_Multiple(t *testing.T) {
 	_, err = fx.raw.Create(context.Background(), "Bob", "bob@example.com", "b")
 	require.NoError(t, err)
 
-	users, err := fx.raw.List(context.Background())
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
 	require.NoError(t, err)
 	assert.Len(t, users, 2)
+	assert.Equal(t, int64(2), total)
+}
+
+// TestList_Pagination_Limit verifies that limit restricts the number of results.
+func TestList_Pagination_Limit(t *testing.T) {
+	fx := setupTest(t)
+
+	_, err := fx.raw.Create(context.Background(), "Alice", "alice@example.com", "a")
+	require.NoError(t, err)
+	_, err = fx.raw.Create(context.Background(), "Bob", "bob@example.com", "b")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 1, 0)
+	require.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, int64(2), total)
+}
+
+// TestList_Pagination_Offset verifies that offset skips the first N results.
+func TestList_Pagination_Offset(t *testing.T) {
+	fx := setupTest(t)
+
+	_, err := fx.raw.Create(context.Background(), "Alice", "alice@example.com", "a")
+	require.NoError(t, err)
+	_, err = fx.raw.Create(context.Background(), "Bob", "bob@example.com", "b")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 10, 1)
+	require.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, int64(2), total)
+	// With ORDER BY id ASC, offset=1 should return the second user
+	assert.Equal(t, "Bob", users[0].Name)
 }
 
 // ---------------------------------------------------------------------------
