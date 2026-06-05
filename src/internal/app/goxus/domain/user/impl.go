@@ -125,6 +125,24 @@ func (s *impl) Update(_ context.Context, id int64, name, email string) (*goxus.U
 	return user, nil
 }
 
+// UpdatePassword updates the password of a user.
+func (s *impl) UpdatePassword(_ context.Context, id int64, password string) error {
+	user, err := s.repo.User.GetUserByID(id)
+	if err != nil {
+		return ge.Pin(fmt.Errorf("user id '%d': %w", id, ErrUserNotFound))
+	}
+
+	user.Password = password // TODO: hash password before storing
+	user.UpdatedAt = time.Now()
+
+	err = s.repo.User.Save(user)
+	if err != nil {
+		return ge.Pin(err)
+	}
+
+	return nil
+}
+
 // Delete soft-deletes a user by setting deleted_at.
 func (s *impl) Delete(_ context.Context, id int64) error {
 	user, err := s.repo.User.GetUserByID(id)

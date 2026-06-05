@@ -1,0 +1,28 @@
+db:
+    host: 127.0.0.1
+    port: "5432"
+    name: goxus
+    user: goxus
+    password: "12345"
+    sslmode: disable
+    binaryparameters: ""
+    statementcachemode: ""
+    maxconnections: ""
+    useconnectionpooler: false
+hosts:
+    api:
+        host: 127.0.0.1
+        post: "8080"
+cron:
+    example_job:
+        enabled: true
+        schedule: '@every 10m'
+    token_cleanup_job:
+        enabled: true
+        schedule: '@every 1m'
+rate_limit:
+    enabled: false
+    max_attempts: 5
+    window: "5m"
+token:
+    ttl_days: 7

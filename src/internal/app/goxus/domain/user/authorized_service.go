@@ -102,6 +102,24 @@ func (a *authorizedService) Update(ctx context.Context, id int64, name, email st
 	return a.inner.Update(ctx, id, name, email)
 }
 
+// UpdatePassword updates the password of a user. Requires user_edit permission.
+func (a *authorizedService) UpdatePassword(ctx context.Context, id int64, password string) error {
+	actorID, ok := ActorIDFromContext(ctx)
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserEdit)
+	if err != nil {
+		return ge.Pin(err)
+	}
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	return a.inner.UpdatePassword(ctx, id, password)
+}
+
 // Delete deletes a user by ID. Requires user_delete permission.
 // A user cannot delete themselves.
 func (a *authorizedService) Delete(ctx context.Context, id int64) error {

@@ -51,6 +51,10 @@ type Service interface {
 	// Requires user_edit permission.
 	Update(ctx context.Context, id int64, name, email string) (*goxus.User, error)
 
+	// UpdatePassword updates the password of a user.
+	// Requires user_edit permission.
+	UpdatePassword(ctx context.Context, id int64, password string) error
+
 	// Delete soft-deletes a user by ID (sets deleted_at).
 	// Requires user_delete permission.
 	Delete(ctx context.Context, id int64) error

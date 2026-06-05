@@ -53,6 +53,9 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 				// Restore user
 				users.POST("/:id/restore", h.RestoreUser)
 
+				// Change password
+				users.PUT("/:id/password", h.ChangeUserPassword)
+
 				// User roles
 				users.GET("/:id/roles", h.GetUserRoles)
 				users.POST("/:id/roles", h.AssignUserRole)

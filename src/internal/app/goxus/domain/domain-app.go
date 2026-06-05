@@ -26,6 +26,8 @@ type DomainService interface {
 	ListUsers(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error)
 	GetUser(ctx context.Context, id int64) (*goxus.User, error)
 	UpdateUser(ctx context.Context, id int64, name, email string) (*goxus.User, error)
+	// UpdateUserPassword updates the password of a user.
+	UpdateUserPassword(ctx context.Context, id int64, password string) error
 	DeleteUser(ctx context.Context, id int64) error
 
 	// RestoreUser restores a soft-deleted user.
@@ -89,6 +91,10 @@ func (d *AppDomain) GetUser(ctx context.Context, id int64) (*goxus.User, error) 
 
 func (d *AppDomain) UpdateUser(ctx context.Context, id int64, name, email string) (*goxus.User, error) {
 	return d.User.Update(ctx, id, name, email)
+}
+
+func (d *AppDomain) UpdateUserPassword(ctx context.Context, id int64, password string) error {
+	return d.User.UpdatePassword(ctx, id, password)
 }
 
 func (d *AppDomain) DeleteUser(ctx context.Context, id int64) error {

@@ -24,6 +24,7 @@ type UserResponse struct {
 	EmailVerifiedAt *time.Time `json:"email_verified_at,omitempty"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
+	DeletedAt       *time.Time `json:"deleted_at,omitempty"`
 }
 
 // CreateUserRequest is the request body for creating a user.
@@ -37,6 +38,11 @@ type CreateUserRequest struct {
 type UpdateUserRequest struct {
 	Name  string `json:"name" binding:"required,min=1"`
 	Email string `json:"email" binding:"required,email"`
+}
+
+// ChangePasswordRequest is the request body for changing a user password.
+type ChangePasswordRequest struct {
+	Password string `json:"password" binding:"required,min=6"`
 }
 
 // AssignRoleRequest is the request body for assigning a role.
@@ -56,6 +62,9 @@ func userToResponse(u *goxus.User) UserResponse {
 	}
 	if u.EmailVerifiedAt.Valid {
 		resp.EmailVerifiedAt = &u.EmailVerifiedAt.Time
+	}
+	if u.DeletedAt.Valid {
+		resp.DeletedAt = &u.DeletedAt.Time
 	}
 	return resp
 }
@@ -197,6 +206,39 @@ func (h *HttpHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"version": "v1",
 		"data":    userToResponse(user),
+	})
+}
+
+// ChangeUserPassword handles PUT /api/v1/entity/user/:id/password
+func (h *HttpHandler) ChangeUserPassword(c *gin.Context) {
+	ctx, ok := authContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req ChangePasswordRequest
+	err = c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.Domain.UpdateUserPassword(ctx, id, req.Password)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"version": "v1",
+		"message": "password updated",
 	})
 }
 
