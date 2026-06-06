@@ -35,7 +35,9 @@ func ProvideCronScheduler(
 		if err != nil {
 			return nil, nil, err
 		}
-		log.Println("[cron] Registered example_job with schedule:", cfg.Cron.ExampleJob.Schedule)
+		if !cfg.Log.Quiet {
+			log.Println("[cron] Registered example_job with schedule:", cfg.Cron.ExampleJob.Schedule)
+		}
 	}
 
 	if cfg.Cron.TokenCleanupJob.Enabled {
@@ -43,7 +45,9 @@ func ProvideCronScheduler(
 		if err != nil {
 			return nil, nil, err
 		}
-		log.Println("[cron] Registered token_cleanup_job with schedule:", cfg.Cron.TokenCleanupJob.Schedule)
+		if !cfg.Log.Quiet {
+			log.Println("[cron] Registered token_cleanup_job with schedule:", cfg.Cron.TokenCleanupJob.Schedule)
+		}
 	}
 
 	cleanup := func() {

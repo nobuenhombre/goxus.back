@@ -16,6 +16,7 @@ type DbGoxusRepo struct {
 	SchemaMigration    ISchemaMigrationRepository
 	User               IUserRepository
 	UsersToken         IUsersTokenRepository
+	UserWithRole       IUserWithRoleRepository
 }
 
 func NewDbGoxusRepository(config *pgxdb.Config, log types.SQLLoggerFunc) (*DbGoxusRepo, error) {
@@ -33,6 +34,7 @@ func NewDbGoxusRepository(config *pgxdb.Config, log types.SQLLoggerFunc) (*DbGox
 		SchemaMigration:    NewSchemaMigrationRepository(db),
 		User:               NewUserRepository(db),
 		UsersToken:         NewUsersTokenRepository(db),
+		UserWithRole:       NewUserWithRoleRepository(db),
 	}, nil
 }
 

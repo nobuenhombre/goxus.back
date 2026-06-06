@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"goxus/src/internal/app/goxus/cli"
+	configapp "goxus/src/internal/app/goxus/config"
 
 	"github.com/google/wire"
 	"github.com/nobuenhombre/suikat/pkg/db/types"
@@ -33,8 +34,14 @@ func ProvideLogFile(cliConfig cli.Service) (ILogFile, func(), error) {
 }
 
 // ProvideSQLLogger provides a SQL query logger for xo-generated repositories.
-func ProvideSQLLogger() (types.SQLLoggerFunc, func(), error) {
+// When log.quiet is set in config, returns a no-op logger that discards SQL logs.
+func ProvideSQLLogger(appConfig configapp.Service) (types.SQLLoggerFunc, func(), error) {
 	cleanup := func() {}
+
+	if appConfig.Get().Log.Quiet {
+		logger := types.SQLLoggerFunc(func(sql string, du time.Duration, sqlParams ...any) {})
+		return logger, cleanup, nil
+	}
 
 	logger := types.SQLLoggerFunc(func(sql string, du time.Duration, sqlParams ...any) {
 		log.Printf("[SQL] %s [%v] %v", sql, du, sqlParams)

@@ -4,7 +4,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"goxus/src/internal/pkg/db/goxus"
 )
 
 // TestCreateRole_Success verifies a role is created and returned via GetAllRoles.
@@ -520,4 +523,305 @@ func TestRevokeRolePermission_NotAssigned(t *testing.T) {
 	// Revoke a permission that was never assigned — no error
 	err = fx.svc.RevokeRolePermission("guest", "write")
 	require.NoError(t, err)
+}
+
+// TestRevokeUserRole_NotFound verifies ErrRoleNotFound when revoking a non-existent role.
+func TestRevokeUserRole_NotFound(t *testing.T) {
+	fx := setupTest(t)
+
+	err := fx.svc.RevokeUserRole(testUserID, "nonexistent")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrRoleNotFound)
+}
+
+// TestRevokeRolePermission_RoleNotFound verifies ErrRoleNotFound when revoking with a non-existent role slug.
+func TestRevokeRolePermission_RoleNotFound(t *testing.T) {
+	fx := setupTest(t)
+
+	err := fx.svc.RevokeRolePermission("nonexistent", "write")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrRoleNotFound)
+}
+
+// TestRevokeRolePermission_PermNotFound verifies ErrPermissionNotFound when revoking with a non-existent permission slug.
+func TestRevokeRolePermission_PermNotFound(t *testing.T) {
+	fx := setupTest(t)
+
+	err := fx.svc.CreateRole("Guest", "guest")
+	require.NoError(t, err)
+
+	err = fx.svc.RevokeRolePermission("guest", "nonexistent")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrPermissionNotFound)
+}
+
+// ──── Mock-based tests (DB error path) ───────────────────────────────────
+
+func newMockService(
+	mockRole goxus.IRbacRoleRepository,
+	mockPerm goxus.IRbacPermissionRepository,
+	mockRolePerm goxus.IRbacRolePermissionRepository,
+	mockUserRole goxus.IRbacUserRoleRepository,
+) Service {
+	return &impl{
+		roleRepo:       mockRole,
+		permissionRepo: mockPerm,
+		rolePermRepo:   mockRolePerm,
+		userRoleRepo:   mockUserRole,
+	}
+}
+
+func TestGetAllRoles_DBError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockRole.On("GetAll").Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, nil)
+	_, err := svc.GetAllRoles()
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+}
+
+func TestGetAllPermissions_DBError(t *testing.T) {
+	mockPerm := &mockRbacPermissionRepo{}
+	mockPerm.On("GetAll").Return(nil, assert.AnError)
+
+	svc := newMockService(nil, mockPerm, nil, nil)
+	_, err := svc.GetAllPermissions()
+	require.Error(t, err)
+	mockPerm.AssertExpectations(t)
+}
+
+func TestGetUserRoles_DBError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockRole.On("GetRolesByUserID", int64(1)).Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, nil)
+	_, err := svc.GetUserRoles(1)
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+}
+
+func TestCheckUserPermission_DBError(t *testing.T) {
+	mockPerm := &mockRbacPermissionRepo{}
+	mockPerm.On("GetRbacPermissionBySlug", "view").Return(&goxus.RbacPermission{ID: 1, Slug: "view"}, nil)
+	mockPerm.On("GetPermissionsByUserIDAndSlug", int64(1), "view").Return(nil, assert.AnError)
+
+	svc := newMockService(nil, mockPerm, nil, nil)
+	_, err := svc.CheckUserPermission(1, "view")
+	require.Error(t, err)
+	mockPerm.AssertExpectations(t)
+}
+
+func TestCheckRolePermission_PermNotFound(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockPerm := &mockRbacPermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin"}, nil)
+	mockPerm.On("GetRbacPermissionBySlug", "nonexistent").Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, mockPerm, nil, nil)
+	_, err := svc.CheckRolePermission("admin", "nonexistent")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockPerm.AssertExpectations(t)
+}
+
+func TestCreateRole_SaveError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(nil, assert.AnError)
+	mockRole.On("Save", mock.AnythingOfType("*goxus.RbacRole")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, nil)
+	err := svc.CreateRole("Admin", "admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+}
+
+func TestCreatePermission_SaveError(t *testing.T) {
+	mockPerm := &mockRbacPermissionRepo{}
+	mockPerm.On("GetRbacPermissionBySlug", "read").Return(nil, assert.AnError)
+	mockPerm.On("Save", mock.AnythingOfType("*goxus.RbacPermission")).Return(assert.AnError)
+
+	svc := newMockService(nil, mockPerm, nil, nil)
+	err := svc.CreatePermission("Read", "read")
+	require.Error(t, err)
+	mockPerm.AssertExpectations(t)
+}
+
+func TestAssignRoleToUser_SaveError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "moderator").Return(&goxus.RbacRole{ID: 1, Name: "Moderator", Slug: "moderator"}, nil)
+	mockUserRole.On("GetRbacUserRoleByUserIDRoleID", int64(1), int64(1)).Return(nil, assert.AnError)
+	mockUserRole.On("Save", mock.AnythingOfType("*goxus.RbacUserRole")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, mockUserRole)
+	err := svc.AssignRoleToUser(1, "moderator")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+}
+
+func TestAssignPermissionsToRole_SaveError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockPerm := &mockRbacPermissionRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "editor").Return(&goxus.RbacRole{ID: 1, Slug: "editor", Name: "Editor"}, nil)
+	mockPerm.On("GetRbacPermissionBySlug", "write").Return(&goxus.RbacPermission{ID: 1, Slug: "write", Name: "Write"}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByRoleIDPermissionID", int64(1), int64(1)).Return(nil, assert.AnError)
+	mockRolePerm.On("Save", mock.AnythingOfType("*goxus.RbacRolePermission")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, mockPerm, mockRolePerm, nil)
+	err := svc.AssignPermissionsToRole("editor", []string{"write"})
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockPerm.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestRevokeUserRole_DeleteError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin"}, nil)
+	mockUserRole.On("GetRbacUserRoleByUserIDRoleID", int64(1), int64(1)).Return(&goxus.RbacUserRole{UserID: 1, RoleID: 1}, nil)
+	mockUserRole.On("Delete", mock.AnythingOfType("*goxus.RbacUserRole")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, mockUserRole)
+	err := svc.RevokeUserRole(1, "admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+}
+
+func TestRevokeRolePermission_DeleteError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockPerm := &mockRbacPermissionRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin"}, nil)
+	mockPerm.On("GetRbacPermissionBySlug", "write").Return(&goxus.RbacPermission{ID: 1, Slug: "write"}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByRoleIDPermissionID", int64(1), int64(1)).
+		Return(&goxus.RbacRolePermission{RoleID: 1, PermissionID: 1}, nil)
+	mockRolePerm.On("Delete", mock.AnythingOfType("*goxus.RbacRolePermission")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, mockPerm, mockRolePerm, nil)
+	err := svc.RevokeRolePermission("admin", "write")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockPerm.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestGetRolePermissions_DBError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockPerm := &mockRbacPermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin"}, nil)
+	mockPerm.On("GetPermissionsByRoleSlug", "admin").Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, mockPerm, nil, nil)
+	_, err := svc.GetRolePermissions("admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockPerm.AssertExpectations(t)
+}
+
+func TestDeleteRole_GetUserRoleError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin", Name: "Admin"}, nil)
+	mockUserRole.On("GetRbacUserRoleByRoleID", int64(1)).Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, nil, nil, mockUserRole)
+	err := svc.DeleteRole("admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+}
+
+func TestDeleteRole_GetRolePermError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin", Name: "Admin"}, nil)
+	mockUserRole.On("GetRbacUserRoleByRoleID", int64(1)).Return([]*goxus.RbacUserRole{}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByRoleID", int64(1)).Return(nil, assert.AnError)
+
+	svc := newMockService(mockRole, nil, mockRolePerm, mockUserRole)
+	err := svc.DeleteRole("admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestDeleteRole_DeleteRolePermLinkError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin"}, nil)
+	mockUserRole.On("GetRbacUserRoleByRoleID", int64(1)).Return([]*goxus.RbacUserRole{}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByRoleID", int64(1)).
+		Return([]*goxus.RbacRolePermission{{RoleID: 1, PermissionID: 1}}, nil)
+	mockRolePerm.On("Delete", mock.AnythingOfType("*goxus.RbacRolePermission")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, nil, mockRolePerm, mockUserRole)
+	err := svc.DeleteRole("admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestDeleteRole_DeleteError(t *testing.T) {
+	mockRole := &mockRbacRoleRepo{}
+	mockUserRole := &mockRbacUserRoleRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockRole.On("GetRbacRoleBySlug", "admin").Return(&goxus.RbacRole{ID: 1, Slug: "admin", Name: "Admin"}, nil)
+	mockUserRole.On("GetRbacUserRoleByRoleID", int64(1)).Return([]*goxus.RbacUserRole{}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByRoleID", int64(1)).Return([]*goxus.RbacRolePermission{}, nil)
+	mockRole.On("Delete", mock.AnythingOfType("*goxus.RbacRole")).Return(assert.AnError)
+
+	svc := newMockService(mockRole, nil, mockRolePerm, mockUserRole)
+	err := svc.DeleteRole("admin")
+	require.Error(t, err)
+	mockRole.AssertExpectations(t)
+	mockUserRole.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestDeletePermission_GetRolePermError(t *testing.T) {
+	mockPerm := &mockRbacPermissionRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockPerm.On("GetRbacPermissionBySlug", "write").Return(&goxus.RbacPermission{ID: 1, Slug: "write", Name: "Write"}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByPermissionID", int64(1)).Return(nil, assert.AnError)
+
+	svc := newMockService(nil, mockPerm, mockRolePerm, nil)
+	err := svc.DeletePermission("write")
+	require.Error(t, err)
+	mockPerm.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
+}
+
+func TestDeletePermission_DeleteError(t *testing.T) {
+	mockPerm := &mockRbacPermissionRepo{}
+	mockRolePerm := &mockRbacRolePermissionRepo{}
+
+	mockPerm.On("GetRbacPermissionBySlug", "write").Return(&goxus.RbacPermission{ID: 1, Slug: "write", Name: "Write"}, nil)
+	mockRolePerm.On("GetRbacRolePermissionByPermissionID", int64(1)).Return([]*goxus.RbacRolePermission{}, nil)
+	mockPerm.On("Delete", mock.AnythingOfType("*goxus.RbacPermission")).Return(assert.AnError)
+
+	svc := newMockService(nil, mockPerm, mockRolePerm, nil)
+	err := svc.DeletePermission("write")
+	require.Error(t, err)
+	mockPerm.AssertExpectations(t)
+	mockRolePerm.AssertExpectations(t)
 }

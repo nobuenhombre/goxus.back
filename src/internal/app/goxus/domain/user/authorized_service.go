@@ -46,7 +46,7 @@ func (a *authorizedService) Create(ctx context.Context, name, email, password st
 }
 
 // List returns users with pagination. Requires user_view permission.
-func (a *authorizedService) List(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
+func (a *authorizedService) List(ctx context.Context, limit, offset int) ([]*goxus.UserWithRole, int64, error) {
 	actorID, ok := ActorIDFromContext(ctx)
 	if !ok {
 		return nil, 0, ge.Pin(ErrAccessDenied)

@@ -9,4 +9,8 @@ const (
 	UserRoleAdd    = "user_role_add"
 	UserRoleView   = "user_role_view"
 	UserRoleDelete = "user_role_delete"
+	DataView       = "data_view"
+	DataAdd        = "data_add"
+	DataEdit       = "data_edit"
+	DataDelete     = "data_delete"
 )

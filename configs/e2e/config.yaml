@@ -1,8 +1,8 @@
 db:
     host: 127.0.0.1
     port: "5432"
-    name: goxus
-    user: goxus
+    name: goxus_e2e
+    user: goxus_e2e
     password: "12345"
     sslmode: disable
     binaryparameters: ""
@@ -12,7 +12,9 @@ db:
 hosts:
     api:
         host: 127.0.0.1
-        post: "8080"
+        post: "8081"
+log:
+    quiet: true
 cron:
     example_job:
         enabled: true

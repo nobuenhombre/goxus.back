@@ -59,6 +59,7 @@ func TestList_Empty(t *testing.T) {
 }
 
 // TestList_Multiple verifies that multiple users are returned with default pagination.
+// Also verifies that users without roles have empty Roles field.
 func TestList_Multiple(t *testing.T) {
 	fx := setupTest(t)
 
@@ -71,6 +72,121 @@ func TestList_Multiple(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, users, 2)
 	assert.Equal(t, int64(2), total)
+
+	// Both users have no roles — Roles should be empty string (Valid=true)
+	for _, u := range users {
+		assert.True(t, u.Roles.Valid, "Roles should be valid (non-NULL) for users without roles")
+		assert.Empty(t, u.Roles.String, "Roles should be empty for users without roles")
+	}
+}
+
+// TestList_Roles_Empty verifies that a user with no roles has empty Roles field.
+func TestList_Roles_Empty(t *testing.T) {
+	fx := setupTest(t)
+
+	_, err := fx.raw.Create(context.Background(), "NoRole", "norole@example.com", "pass")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	assert.Equal(t, int64(1), total)
+
+	// User has no roles — view coalesces to empty string
+	assert.True(t, users[0].Roles.Valid)
+	assert.Empty(t, users[0].Roles.String)
+}
+
+// TestList_Roles_SingleRole verifies that a user with one role has it in the Roles field.
+func TestList_Roles_SingleRole(t *testing.T) {
+	fx := setupTest(t)
+
+	user, err := fx.raw.Create(context.Background(), "SingleRole", "singlerole@example.com", "pass")
+	require.NoError(t, err)
+
+	// Create role and assign
+	err = fx.rbacSvc.CreateRole("Editor", "editor")
+	require.NoError(t, err)
+	err = fx.raw.AssignRole(context.Background(), user.ID, "editor")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	assert.Equal(t, int64(1), total)
+
+	assert.True(t, users[0].Roles.Valid)
+	assert.Equal(t, "Editor", users[0].Roles.String)
+}
+
+// TestList_Roles_MultipleRoles verifies that a user with multiple roles
+// has them aggregated in the Roles field (sorted alphabetically, comma-separated).
+func TestList_Roles_MultipleRoles(t *testing.T) {
+	fx := setupTest(t)
+
+	user, err := fx.raw.Create(context.Background(), "MultiRole", "multirole@example.com", "pass")
+	require.NoError(t, err)
+
+	// Create two roles (alphabetically "Moderator" < "Viewer")
+	err = fx.rbacSvc.CreateRole("Moderator", "moderator")
+	require.NoError(t, err)
+	err = fx.rbacSvc.CreateRole("Viewer", "viewer")
+	require.NoError(t, err)
+
+	// Assign both
+	err = fx.raw.AssignRole(context.Background(), user.ID, "moderator")
+	require.NoError(t, err)
+	err = fx.raw.AssignRole(context.Background(), user.ID, "viewer")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	assert.Equal(t, int64(1), total)
+
+	assert.True(t, users[0].Roles.Valid)
+	// string_agg orders by r.name ASC: "Moderator, Viewer"
+	assert.Equal(t, "Moderator, Viewer", users[0].Roles.String)
+}
+
+// TestList_Roles_DifferentUsers verifies that each user's roles are correctly
+// scoped — user A's roles don't leak into user B's Roles field.
+func TestList_Roles_DifferentUsers(t *testing.T) {
+	fx := setupTest(t)
+
+	alice, err := fx.raw.Create(context.Background(), "Alice", "alice-roles@example.com", "pass")
+	require.NoError(t, err)
+	bob, err := fx.raw.Create(context.Background(), "Bob", "bob-roles@example.com", "pass")
+	require.NoError(t, err)
+
+	// Create roles
+	err = fx.rbacSvc.CreateRole("Admin", "admin")
+	require.NoError(t, err)
+	err = fx.rbacSvc.CreateRole("Viewer", "viewer")
+	require.NoError(t, err)
+
+	// Assign different roles
+	err = fx.raw.AssignRole(context.Background(), alice.ID, "admin")
+	require.NoError(t, err)
+	err = fx.raw.AssignRole(context.Background(), bob.ID, "viewer")
+	require.NoError(t, err)
+
+	users, total, err := fx.raw.List(context.Background(), 0, 0)
+	require.NoError(t, err)
+	require.Len(t, users, 2)
+	assert.Equal(t, int64(2), total)
+
+	for _, u := range users {
+		assert.True(t, u.Roles.Valid)
+		switch u.Name.String {
+		case "Alice":
+			assert.Equal(t, "Admin", u.Roles.String, "Alice should have Admin role")
+		case "Bob":
+			assert.Equal(t, "Viewer", u.Roles.String, "Bob should have Viewer role")
+		default:
+			t.Fatalf("unexpected user: %s", u.Name.String)
+		}
+	}
 }
 
 // TestList_Pagination_Limit verifies that limit restricts the number of results.
@@ -102,7 +218,7 @@ func TestList_Pagination_Offset(t *testing.T) {
 	assert.Len(t, users, 1)
 	assert.Equal(t, int64(2), total)
 	// With ORDER BY id ASC, offset=1 should return the second user
-	assert.Equal(t, "Bob", users[0].Name)
+	assert.Equal(t, "Bob", users[0].Name.String)
 }
 
 // ---------------------------------------------------------------------------
@@ -767,4 +883,56 @@ func TestDeleteExpiredTokens_AlreadyDeletedTokens(t *testing.T) {
 	got2, err := fx.repo.UsersToken.GetUsersTokenByToken(token2.Token)
 	require.NoError(t, err)
 	assert.True(t, got2.DeletedAt.Valid, "old non-deleted token should be deleted by cleanup")
+}
+
+// ---------------------------------------------------------------------------
+// UpdatePassword
+// ---------------------------------------------------------------------------
+
+// TestUpdatePassword_Success verifies a password can be updated and new password works for login.
+func TestUpdatePassword_Success(t *testing.T) {
+	fx := setupTest(t)
+
+	created, err := fx.raw.Create(context.Background(), "PassUser", "passuser@example.com", "oldpass")
+	require.NoError(t, err)
+
+	err = fx.raw.UpdatePassword(context.Background(), created.ID, "newpass")
+	require.NoError(t, err)
+
+	// Verify new password works via login
+	_, token, err := fx.raw.Login(context.Background(), "passuser@example.com", "newpass")
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	// Old password should no longer work
+	_, _, err = fx.raw.Login(context.Background(), "passuser@example.com", "oldpass")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "access denied")
+}
+
+// TestUpdatePassword_UserNotFound verifies ErrUserNotFound for a non-existent user.
+func TestUpdatePassword_UserNotFound(t *testing.T) {
+	fx := setupTest(t)
+
+	err := fx.raw.UpdatePassword(context.Background(), 99999, "newpass")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "user not found")
+}
+
+// ---------------------------------------------------------------------------
+// List — negative offset
+// ---------------------------------------------------------------------------
+
+// TestList_NegativeOffset verifies that a negative offset is treated as 0.
+func TestList_NegativeOffset(t *testing.T) {
+	fx := setupTest(t)
+
+	_, err := fx.raw.Create(context.Background(), "Alice", "alice@example.com", "a")
+	require.NoError(t, err)
+
+	// Negative offset should be clamped to 0
+	users, total, err := fx.raw.List(context.Background(), 10, -1)
+	require.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, int64(1), total)
 }

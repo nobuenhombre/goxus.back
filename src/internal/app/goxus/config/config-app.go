@@ -23,9 +23,14 @@ type HostsConfig struct {
 	API configserver.HTTPServerConfig `yaml:"api,omitempty"`
 }
 
+type LogConfig struct {
+	Quiet bool `yaml:"quiet,omitempty"`
+}
+
 type Config struct {
 	DB        pgxdb.Config                         `yaml:"db,omitempty"`
 	Hosts     HostsConfig                          `yaml:"hosts,omitempty"`
+	Log       LogConfig                            `yaml:"log,omitempty"`
 	Cron      configcron.CronConfig                `yaml:"cron,omitempty"`
 	RateLimit configratelimit.LoginRateLimitConfig `yaml:"rate_limit,omitempty"`
 	Example   configexample.ExampleJobConfig       `yaml:"example,omitempty"`

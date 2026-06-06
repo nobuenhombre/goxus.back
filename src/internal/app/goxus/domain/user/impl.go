@@ -15,7 +15,7 @@ import (
 	"goxus/src/internal/pkg/services/rbac"
 )
 
-const DefaultPageSize = 10
+const DefaultPageSize = 100000
 
 var (
 	ErrUserNotFound       = errors.New("user not found")
@@ -68,7 +68,8 @@ func (s *impl) Create(_ context.Context, name, email, password string) (*goxus.U
 }
 
 // List returns users with pagination and total count.
-func (s *impl) List(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
+// Uses the user_with_roles view which includes aggregated role names.
+func (s *impl) List(ctx context.Context, limit, offset int) ([]*goxus.UserWithRole, int64, error) {
 	if limit <= 0 {
 		limit = DefaultPageSize
 	}
@@ -76,12 +77,12 @@ func (s *impl) List(ctx context.Context, limit, offset int) ([]*goxus.User, int6
 		offset = 0
 	}
 
-	users, err := s.repo.User.GetAllWithPagination(limit, offset)
+	users, err := s.repo.UserWithRole.GetAllWithPagination(limit, offset)
 	if err != nil {
 		return nil, 0, ge.Pin(err)
 	}
 
-	total, err := s.repo.User.GetAllCount()
+	total, err := s.repo.UserWithRole.GetAllCount()
 	if err != nil {
 		return nil, 0, ge.Pin(err)
 	}

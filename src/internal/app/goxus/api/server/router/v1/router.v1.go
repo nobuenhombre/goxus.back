@@ -25,6 +25,9 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 		v1.GET("/", h.Welcome)
 		v1.GET("/health", h.Health)
 
+		// Roles list (authenticated)
+		v1.GET("/roles", authMiddleware, h.ListAllRoles)
+
 		// Auth
 		auth := v1.Group("/auth")
 		{

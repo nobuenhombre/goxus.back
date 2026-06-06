@@ -25,6 +25,7 @@ type UserResponse struct {
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 	DeletedAt       *time.Time `json:"deleted_at,omitempty"`
+	Roles           string     `json:"roles"`
 }
 
 // CreateUserRequest is the request body for creating a user.
@@ -57,6 +58,7 @@ func userToResponse(u *goxus.User) UserResponse {
 		ID:        u.ID,
 		Name:      u.Name,
 		Email:     u.Email,
+		Roles:     "",
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	}
@@ -65,6 +67,26 @@ func userToResponse(u *goxus.User) UserResponse {
 	}
 	if u.DeletedAt.Valid {
 		resp.DeletedAt = &u.DeletedAt.Time
+	}
+	return resp
+}
+
+// userWithRoleToResponse converts a UserWithRole (from user_with_roles view) to UserResponse,
+// including the aggregated roles field.
+func userWithRoleToResponse(vu *goxus.UserWithRole) UserResponse {
+	resp := UserResponse{
+		ID:        vu.ID.Int64,
+		Name:      vu.Name.String,
+		Email:     vu.Email.String,
+		Roles:     vu.Roles.String,
+		CreatedAt: vu.CreatedAt.Time,
+		UpdatedAt: vu.UpdatedAt.Time,
+	}
+	if vu.EmailVerifiedAt.Valid {
+		resp.EmailVerifiedAt = &vu.EmailVerifiedAt.Time
+	}
+	if vu.DeletedAt.Valid {
+		resp.DeletedAt = &vu.DeletedAt.Time
 	}
 	return resp
 }
@@ -140,7 +162,7 @@ func (h *HttpHandler) ListUsers(c *gin.Context) {
 
 	responses := make([]UserResponse, 0, len(users))
 	for _, u := range users {
-		responses = append(responses, userToResponse(u))
+		responses = append(responses, userWithRoleToResponse(u))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -292,6 +314,30 @@ func (h *HttpHandler) RestoreUser(c *gin.Context) {
 		"version": "v1",
 		"data":    userToResponse(user),
 		"message": "user restored",
+	})
+}
+
+// ListAllRoles handles GET /api/v1/roles
+func (h *HttpHandler) ListAllRoles(c *gin.Context) {
+	ctx, ok := authContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	roles, err := h.Domain.GetAllRoles(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if roles == nil {
+		roles = []*goxus.RbacRole{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"version": "v1",
+		"data":    roles,
 	})
 }
 

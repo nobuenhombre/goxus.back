@@ -446,3 +446,48 @@ func TestAuthorizedRevokeRole_WithPermission(t *testing.T) {
 	err = fx.svc.RevokeRole(actorCtx(actorID), actorID, "temp")
 	require.NoError(t, err)
 }
+
+// ---------------------------------------------------------------------------
+// DeleteExpiredTokens — pass-through (no RBAC)
+// ---------------------------------------------------------------------------
+
+func TestAuthorizedDeleteExpiredTokens_Passthrough(t *testing.T) {
+	fx := setupTest(t)
+
+	// DeleteExpiredTokens is a system operation — no RBAC check, should pass through
+	err := fx.svc.DeleteExpiredTokens(context.Background(), 30)
+	require.NoError(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// UpdatePassword — requires user_edit permission
+// ---------------------------------------------------------------------------
+
+func TestAuthorizedUpdatePassword_NoActorID(t *testing.T) {
+	fx := setupTest(t)
+
+	err := fx.svc.UpdatePassword(context.Background(), 1, "newpass")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "access denied")
+}
+
+func TestAuthorizedUpdatePassword_NoPermission(t *testing.T) {
+	fx := setupTest(t)
+	actorID := createActor(t, fx)
+
+	err := fx.rbacSvc.CreatePermission(permission.UserEdit, permission.UserEdit)
+	require.NoError(t, err)
+
+	err = fx.svc.UpdatePassword(actorCtx(actorID), actorID, "newpass")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "access denied")
+}
+
+func TestAuthorizedUpdatePassword_WithPermission(t *testing.T) {
+	fx := setupTest(t)
+	actorID := createActor(t, fx)
+	grantPermission(t, fx, actorID, permission.UserEdit)
+
+	err := fx.svc.UpdatePassword(actorCtx(actorID), actorID, "newpass")
+	require.NoError(t, err)
+}

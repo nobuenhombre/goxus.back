@@ -25,10 +25,10 @@ type HTTPServer struct {
 }
 
 // NewHTTPServer creates a new HTTPServer.
-func NewHTTPServer(config *configserver.HTTPServerConfig, logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service) (srv *HTTPServer, err error) {
+func NewHTTPServer(config *configserver.HTTPServerConfig, logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service, logQuiet bool) (srv *HTTPServer, err error) {
 	srv = new(HTTPServer)
 
-	srv.Router = router.NewHTTPRouter(logFile, dom, rl)
+	srv.Router = router.NewHTTPRouter(logFile, dom, rl, logQuiet)
 
 	srv.Server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", config.Host, config.Port),

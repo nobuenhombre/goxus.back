@@ -24,7 +24,7 @@ type HTTPRouter struct {
 }
 
 // NewHTTPRouter creates a new HTTPRouter.
-func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service) (router *HTTPRouter) {
+func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService, rl ratelimit.Service, logQuiet bool) (router *HTTPRouter) {
 	router = new(HTTPRouter)
 
 	if logFile != nil {
@@ -37,7 +37,9 @@ func NewHTTPRouter(logFile *os.File, dom domainapp.DomainService, rl ratelimit.S
 
 	router.Router = gin.Default()
 	router.Router.Use(router.Middlewares.CORSMiddleware())
-	router.Router.Use(router.Middlewares.APILoggerMiddleware())
+	if !logQuiet {
+		router.Router.Use(router.Middlewares.APILoggerMiddleware())
+	}
 
 	router.SetupRoutes(dom, rl)
 

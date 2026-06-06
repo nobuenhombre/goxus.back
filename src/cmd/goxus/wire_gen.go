@@ -41,7 +41,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	sqlLoggerFunc, cleanup3, err := logfile.ProvideSQLLogger()
+	sqlLoggerFunc, cleanup3, err := logfile.ProvideSQLLogger(configappService)
 	if err != nil {
 		cleanup2()
 		cleanup()

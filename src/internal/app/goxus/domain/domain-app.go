@@ -23,7 +23,8 @@ type DomainService interface {
 	// ListUsers returns users with pagination and total count.
 	// limit=0 returns the default page size (50).
 	// offset=0 starts from the beginning.
-	ListUsers(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error)
+	// Returns []*goxus.UserWithRole which includes aggregated role names in UserWithRole.Roles.
+	ListUsers(ctx context.Context, limit, offset int) ([]*goxus.UserWithRole, int64, error)
 	GetUser(ctx context.Context, id int64) (*goxus.User, error)
 	UpdateUser(ctx context.Context, id int64, name, email string) (*goxus.User, error)
 	// UpdateUserPassword updates the password of a user.
@@ -39,6 +40,8 @@ type DomainService interface {
 	// ValidateToken validates a Bearer token and returns the associated user and token.
 	ValidateToken(ctx context.Context, token string) (*goxus.User, *goxus.UsersToken, error)
 
+	// GetAllRoles returns all available roles.
+	GetAllRoles(ctx context.Context) ([]*goxus.RbacRole, error)
 	GetUserRoles(ctx context.Context, userID int64) ([]*goxus.RbacRole, error)
 	AssignUserRole(ctx context.Context, userID int64, roleSlug string) error
 	RevokeUserRole(ctx context.Context, userID int64, roleSlug string) error
@@ -81,7 +84,7 @@ func (d *AppDomain) CreateUser(ctx context.Context, name, email, password string
 	return d.User.Create(ctx, name, email, password)
 }
 
-func (d *AppDomain) ListUsers(ctx context.Context, limit, offset int) ([]*goxus.User, int64, error) {
+func (d *AppDomain) ListUsers(ctx context.Context, limit, offset int) ([]*goxus.UserWithRole, int64, error) {
 	return d.User.List(ctx, limit, offset)
 }
 
@@ -119,6 +122,10 @@ func (d *AppDomain) ValidateToken(ctx context.Context, token string) (*goxus.Use
 
 func (d *AppDomain) GetUserRoles(ctx context.Context, userID int64) ([]*goxus.RbacRole, error) {
 	return d.User.GetRoles(ctx, userID)
+}
+
+func (d *AppDomain) GetAllRoles(ctx context.Context) ([]*goxus.RbacRole, error) {
+	return d.Rbac.GetAllRoles()
 }
 
 func (d *AppDomain) AssignUserRole(ctx context.Context, userID int64, roleSlug string) error {
