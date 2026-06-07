@@ -49,6 +49,19 @@ type DomainService interface {
 	// DeleteExpiredTokens soft-deletes all tokens older than ttlDays days.
 	// Internal system operation — used by cronjob, no RBAC.
 	DeleteExpiredTokens(ctx context.Context, ttlDays int) error
+
+	// GetAvatar returns the avatar image for a user.
+	// Returns the user's custom avatar if it exists, otherwise the default avatar.
+	// Returns (imageBytes, contentType, error).
+	GetAvatar(ctx context.Context, userID int64) ([]byte, string, error)
+
+	// UploadAvatar saves an avatar image for a user.
+	// Validates that the image is exactly 460x460 pixels before saving.
+	UploadAvatar(ctx context.Context, userID int64, data []byte) error
+
+	// DeleteAvatar removes the custom avatar for a user.
+	// After deletion, GetAvatar will return the default avatar.
+	DeleteAvatar(ctx context.Context, userID int64) error
 }
 
 // AppDomain is the concrete implementation of DomainService.
@@ -138,4 +151,18 @@ func (d *AppDomain) RevokeUserRole(ctx context.Context, userID int64, roleSlug s
 
 func (d *AppDomain) DeleteExpiredTokens(ctx context.Context, ttlDays int) error {
 	return d.User.DeleteExpiredTokens(ctx, ttlDays)
+}
+
+// ---- Avatar delegation ----
+
+func (d *AppDomain) GetAvatar(ctx context.Context, userID int64) ([]byte, string, error) {
+	return d.User.GetAvatar(ctx, userID)
+}
+
+func (d *AppDomain) UploadAvatar(ctx context.Context, userID int64, data []byte) error {
+	return d.User.UploadAvatar(ctx, userID, data)
+}
+
+func (d *AppDomain) DeleteAvatar(ctx context.Context, userID int64) error {
+	return d.User.DeleteAvatar(ctx, userID)
 }

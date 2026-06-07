@@ -63,6 +63,11 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 				users.GET("/:id/roles", h.GetUserRoles)
 				users.POST("/:id/roles", h.AssignUserRole)
 				users.DELETE("/:id/roles/:slug", h.RevokeUserRole)
+
+				// User avatar
+				users.GET("/:id/avatar", h.GetUserAvatar)
+				users.POST("/:id/avatar", h.UploadUserAvatar)
+				users.DELETE("/:id/avatar", h.DeleteUserAvatar)
 			}
 		}
 	}

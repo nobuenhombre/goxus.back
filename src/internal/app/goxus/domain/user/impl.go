@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	configapp "goxus/src/internal/app/goxus/config"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,9 @@ var (
 	ErrCannotDeleteSelf   = errors.New("cannot delete yourself")
 	ErrUserAlreadyDeleted = errors.New("user already deleted")
 	ErrUserNotDeleted     = errors.New("user not deleted")
+	ErrAvatarNotFound     = errors.New("avatar not found")
+	ErrInvalidImageSize   = errors.New("image must be exactly 460x460 pixels")
+	ErrInvalidImageFormat = errors.New("invalid image format")
 )
 
 // impl is the concrete implementation of Service with pure business logic.
@@ -32,13 +36,15 @@ var (
 type impl struct {
 	repo    *goxus.DbGoxusRepo
 	rbacSvc rbac.Service
+	cfg     *configapp.Config
 }
 
 // New creates a new user domain service with pure business logic.
-func New(dbRepo *goxus.DbGoxusRepo, rbacSvc rbac.Service) Service {
+func New(dbRepo *goxus.DbGoxusRepo, rbacSvc rbac.Service, cfg *configapp.Config) Service {
 	return &impl{
 		repo:    dbRepo,
 		rbacSvc: rbacSvc,
+		cfg:     cfg,
 	}
 }
 

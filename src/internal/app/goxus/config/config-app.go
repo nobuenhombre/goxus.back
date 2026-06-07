@@ -2,6 +2,7 @@ package configapp
 
 import (
 	configserver "goxus/src/internal/app/goxus/api/server/config"
+	configstorage "goxus/src/internal/app/goxus/config/storage"
 	configcron "goxus/src/internal/app/goxus/cron-job/config"
 	configexample "goxus/src/internal/app/goxus/cron-job/jobs/example/config"
 	configcleantokens "goxus/src/internal/app/goxus/cron-job/jobs/token-cleanup/config"
@@ -35,6 +36,7 @@ type Config struct {
 	RateLimit configratelimit.LoginRateLimitConfig `yaml:"rate_limit,omitempty"`
 	Example   configexample.ExampleJobConfig       `yaml:"example,omitempty"`
 	Token     configcleantokens.TokenCleanupConfig `yaml:"token,omitempty"`
+	Storage   configstorage.StorageConfig          `yaml:"storage,omitempty"`
 }
 
 func New(fileName string) (Service, error) {

@@ -62,7 +62,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	userdomainService, cleanup6, err := userdomain.ProvideUserService(dbGoxusRepo, rbacService)
+	userdomainService, cleanup6, err := userdomain.ProvideUserService(dbGoxusRepo, rbacService, configappService)
 	if err != nil {
 		cleanup5()
 		cleanup4()

@@ -2,11 +2,15 @@ package configapp
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	configserver "goxus/src/internal/app/goxus/api/server/config"
 	configcron "goxus/src/internal/app/goxus/cron-job/config"
+
+	"goxus/src/internal/app/goxus/cli"
 
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
 	"github.com/nobuenhombre/suikat/pkg/fico"
@@ -157,5 +161,125 @@ func TestConfigSave(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+// --- New tests below ---
+
+func TestConfigNew(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgPath := filepath.Join(dir, "config.yaml")
+
+		cfg := getTestConfig()
+		if err := cfg.Save(cfgPath); err != nil {
+			t.Fatalf("Save failed: %v", err)
+		}
+
+		svc, err := New(cfgPath)
+		if err != nil {
+			t.Errorf("New() returned error: %v", err)
+		}
+		if svc == nil {
+			t.Error("New() returned nil Service")
+		}
+	})
+
+	t.Run("file_not_found", func(t *testing.T) {
+		_, err := New("/nonexistent/path/config.yaml")
+		if err == nil {
+			t.Error("New() expected error for non-existent file")
+		}
+	})
+}
+
+func TestConfigGet(t *testing.T) {
+	cfg := getTestConfig()
+	got := cfg.Get()
+	if got != cfg {
+		t.Error("Get() should return the same pointer")
+	}
+}
+
+func TestConfigLoad_Errors(t *testing.T) {
+	t.Run("file_not_found", func(t *testing.T) {
+		cfg := new(Config)
+		err := cfg.Load("/nonexistent/path/config.yaml")
+		if err == nil {
+			t.Error("Load() expected error for non-existent file")
+		}
+	})
+
+	t.Run("invalid_yaml", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgPath := filepath.Join(dir, "bad.yaml")
+
+		if err := os.WriteFile(cfgPath, []byte("invalid: [yaml: content"), 0644); err != nil {
+			t.Fatalf("WriteFile failed: %v", err)
+		}
+
+		cfg := new(Config)
+		err := cfg.Load(cfgPath)
+		if err == nil {
+			t.Error("Load() expected error for invalid YAML")
+		}
+	})
+}
+
+func TestConfigSave_Errors(t *testing.T) {
+	t.Run("invalid_path", func(t *testing.T) {
+		cfg := getTestConfig()
+		err := cfg.Save("/nonexistent/dir/config.yaml")
+		if err == nil {
+			t.Error("Save() expected error for invalid path")
+		}
+	})
+}
+
+func TestProvideConfigApp(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgPath := filepath.Join(dir, "config.yaml")
+
+		cfg := getTestConfig()
+		if err := cfg.Save(cfgPath); err != nil {
+			t.Fatalf("Save failed: %v", err)
+		}
+
+		cliCfg := &cli.Config{Config: cfgPath}
+		svc, cleanup, err := ProvideConfigApp(cliCfg)
+		if err != nil {
+			t.Errorf("ProvideConfigApp() returned error: %v", err)
+		}
+		if svc == nil {
+			t.Error("ProvideConfigApp() returned nil Service")
+		}
+		cleanup()
+	})
+
+	t.Run("error", func(t *testing.T) {
+		cliCfg := &cli.Config{Config: "/nonexistent/path/config.yaml"}
+		_, cleanup, err := ProvideConfigApp(cliCfg)
+		if err == nil {
+			t.Error("ProvideConfigApp() expected error for bad config path")
+		}
+		cleanup()
+	})
+}
+
+func TestProvideDBConfig(t *testing.T) {
+	cfg := getTestConfigWithDB()
+	pgxCfg, err := ProvideDBConfig(cfg)
+	if err != nil {
+		t.Errorf("ProvideDBConfig() returned error: %v", err)
+	}
+	if pgxCfg == nil {
+		t.Fatal("ProvideDBConfig() returned nil")
+	}
+	if pgxCfg.Host != "127.0.0.1" || pgxCfg.Port != "5432" {
+		t.Errorf(
+			"ProvideDBConfig() unexpected values: Host=%q, Port=%q",
+			pgxCfg.Host, pgxCfg.Port,
+		)
 	}
 }

@@ -89,4 +89,20 @@ type Service interface {
 	// DeleteExpiredTokens soft-deletes all tokens older than ttlDays days.
 	// Internal system operation — no RBAC check.
 	DeleteExpiredTokens(ctx context.Context, ttlDays int) error
+
+	// GetAvatar returns the avatar image for a user.
+	// Returns the user's custom avatar if it exists, otherwise the default avatar.
+	// Requires user_view permission (except self-read: actorID == id).
+	// Returns (imageBytes, contentType, error).
+	GetAvatar(ctx context.Context, userID int64) ([]byte, string, error)
+
+	// UploadAvatar saves an avatar image for a user.
+	// Requires user_edit permission.
+	// Validates that the image is exactly 460x460 pixels before saving.
+	UploadAvatar(ctx context.Context, userID int64, data []byte) error
+
+	// DeleteAvatar removes the custom avatar for a user.
+	// Requires user_edit permission.
+	// After deletion, GetAvatar will return the default avatar.
+	DeleteAvatar(ctx context.Context, userID int64) error
 }

@@ -26,3 +26,5 @@ rate_limit:
     window: "5m"
 token:
     ttl_days: 7
+storage:
+    avatars_dir: data/local/img/users/avatars

@@ -235,3 +235,60 @@ func (a *authorizedService) RevokeRole(ctx context.Context, userID int64, roleSl
 func (a *authorizedService) DeleteExpiredTokens(ctx context.Context, ttlDays int) error {
 	return a.inner.DeleteExpiredTokens(ctx, ttlDays)
 }
+
+// GetAvatar returns a user's avatar image.
+// Requires user_view permission (except self-read: actorID == userID).
+func (a *authorizedService) GetAvatar(ctx context.Context, userID int64) ([]byte, string, error) {
+	actorID, ok := ActorIDFromContext(ctx)
+	if !ok {
+		return nil, "", ge.Pin(ErrAccessDenied)
+	}
+
+	if actorID != userID {
+		ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserView)
+		if err != nil {
+			return nil, "", ge.Pin(err)
+		}
+		if !ok {
+			return nil, "", ge.Pin(ErrAccessDenied)
+		}
+	}
+
+	return a.inner.GetAvatar(ctx, userID)
+}
+
+// UploadAvatar saves an avatar image for a user. Requires user_edit permission.
+func (a *authorizedService) UploadAvatar(ctx context.Context, userID int64, data []byte) error {
+	actorID, ok := ActorIDFromContext(ctx)
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserEdit)
+	if err != nil {
+		return ge.Pin(err)
+	}
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	return a.inner.UploadAvatar(ctx, userID, data)
+}
+
+// DeleteAvatar removes a user's custom avatar. Requires user_edit permission.
+func (a *authorizedService) DeleteAvatar(ctx context.Context, userID int64) error {
+	actorID, ok := ActorIDFromContext(ctx)
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserEdit)
+	if err != nil {
+		return ge.Pin(err)
+	}
+	if !ok {
+		return ge.Pin(ErrAccessDenied)
+	}
+
+	return a.inner.DeleteAvatar(ctx, userID)
+}

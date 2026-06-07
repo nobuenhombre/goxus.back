@@ -13,14 +13,17 @@ import (
 	pgxdb "github.com/nobuenhombre/suikat/pkg/db/connectors/postgres-pgx-db"
 	"github.com/stretchr/testify/require"
 
+	configapp "goxus/src/internal/app/goxus/config"
+	configstorage "goxus/src/internal/app/goxus/config/storage"
 	"goxus/src/internal/pkg/db/goxus"
 	"goxus/src/internal/pkg/services/rbac"
 	testpostgres "goxus/src/pkg/tests/postgres"
 )
 
 var (
-	globalRepo    *goxus.DbGoxusRepo
-	globalRbacSvc rbac.Service
+	globalRepo       *goxus.DbGoxusRepo
+	globalRbacSvc    rbac.Service
+	globalAvatarsDir string
 )
 
 type testFixtures struct {
@@ -93,11 +96,20 @@ func TestMain(m *testing.M) {
 	// 5. Create global RBAC service
 	globalRbacSvc = rbac.New(globalRepo)
 
-	// 6. Run all tests
+	// 6. Create temp directory for avatar test files
+	avatarsDir, err := os.MkdirTemp("", "goxus-avatars-*")
+	if err != nil {
+		container.Terminate(ctx)
+		os.Exit(1)
+	}
+	globalAvatarsDir = avatarsDir
+
+	// 7. Run all tests
 	code := m.Run()
 
 	// 7. Cleanup
 	globalRepo.Close()
+	os.RemoveAll(globalAvatarsDir)
 	container.Terminate(ctx)
 
 	os.Exit(code)
@@ -158,7 +170,11 @@ func truncateAll(t *testing.T) {
 func setupTest(t *testing.T) testFixtures {
 	truncateAll(t)
 
-	rawSvc := New(globalRepo, globalRbacSvc)
+	rawSvc := New(globalRepo, globalRbacSvc, &configapp.Config{
+		Storage: configstorage.StorageConfig{
+			AvatarsDir: globalAvatarsDir,
+		},
+	})
 	svc := NewAuthorized(rawSvc, globalRbacSvc)
 
 	t.Cleanup(func() {
