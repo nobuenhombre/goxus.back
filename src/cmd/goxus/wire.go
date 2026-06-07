@@ -10,6 +10,7 @@ import (
 	configapp "goxus/src/internal/app/goxus/config"
 	cronjobs "goxus/src/internal/app/goxus/cron-job/jobs"
 	domainapp "goxus/src/internal/app/goxus/domain"
+	settingsdomain "goxus/src/internal/app/goxus/domain/settings"
 	userdomain "goxus/src/internal/app/goxus/domain/user"
 	logfile "goxus/src/internal/app/goxus/log"
 	"goxus/src/internal/pkg/db/goxus"
@@ -28,6 +29,7 @@ func initializeApp() (IApp, func(), error) {
 		rbac.ProviderSet,
 		ratelimit.ProviderSet,
 		userdomain.ProviderSet,
+		settingsdomain.ProviderSet,
 		domainapp.ProviderSet,
 		cronjobs.ProviderSet,
 		server.ProviderSet,

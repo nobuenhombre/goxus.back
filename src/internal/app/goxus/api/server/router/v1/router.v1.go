@@ -45,6 +45,9 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 		entity := v1.Group("/entity")
 		entity.Use(authMiddleware)
 		{
+			// Settings list (requires auth)
+			entity.GET("/settings", h.GetSettingsDefinitions)
+
 			users := entity.Group("/user")
 			{
 				users.POST("/", h.CreateUser)
@@ -67,6 +70,10 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 				// User avatar (upload/delete require auth, get is public)
 				users.POST("/:id/avatar", h.UploadUserAvatar)
 				users.DELETE("/:id/avatar", h.DeleteUserAvatar)
+
+				// User settings
+				users.GET("/:id/settings", h.GetUserSettings)
+				users.PUT("/:id/settings/:settings_id", h.UpsertUserSetting)
 			}
 		}
 

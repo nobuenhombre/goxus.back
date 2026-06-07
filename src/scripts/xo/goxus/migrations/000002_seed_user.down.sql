@@ -1,2 +1,3 @@
-delete from public.users
-where email = 'nobuenhombre@yandex.ru';
+DELETE
+FROM public.users
+WHERE email = 'nobuenhombre@yandex.ru';

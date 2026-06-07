@@ -1,75 +1,75 @@
-create table public.rbac_roles
+CREATE TABLE public.rbac_roles
 (
-    id         bigint generated always as identity
-        constraint rbac_roles_pk
-            primary key,
-    name       varchar(255)            not null,
-    slug       varchar(255)            not null,
-    created_at timestamp default now() not null,
-    updated_at timestamp default now() not null
+    id         BIGINT GENERATED ALWAYS AS IDENTITY
+        CONSTRAINT rbac_roles_pk
+            PRIMARY KEY,
+    name       VARCHAR(255)            NOT NULL,
+    slug       VARCHAR(255)            NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
-create unique index rbac_roles_slug_uindex
-    on public.rbac_roles (slug);
+CREATE UNIQUE INDEX rbac_roles_slug_uindex
+    ON public.rbac_roles (slug);
 
-create table public.rbac_permissions
+CREATE TABLE public.rbac_permissions
 (
-    id         bigint generated always as identity
-        constraint rbac_permissions_pk
-            primary key,
-    name       varchar(255)            not null,
-    slug       varchar(255)            not null,
-    created_at timestamp default now() not null,
-    updated_at timestamp default now() not null
+    id         BIGINT GENERATED ALWAYS AS IDENTITY
+        CONSTRAINT rbac_permissions_pk
+            PRIMARY KEY,
+    name       VARCHAR(255)            NOT NULL,
+    slug       VARCHAR(255)            NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
-create unique index rbac_permissions_slug_uindex
-    on public.rbac_permissions (slug);
+CREATE UNIQUE INDEX rbac_permissions_slug_uindex
+    ON public.rbac_permissions (slug);
 
-create table public.rbac_role_permissions
+CREATE TABLE public.rbac_role_permissions
 (
-    id            bigint generated always as identity
-        constraint rbac_role_permissions_pk
-            primary key,
-    role_id       bigint                  not null,
-    permission_id bigint                  not null,
-    created_at    timestamp default now() not null,
-    updated_at    timestamp default now() not null
+    id            BIGINT GENERATED ALWAYS AS IDENTITY
+        CONSTRAINT rbac_role_permissions_pk
+            PRIMARY KEY,
+    role_id       BIGINT                  NOT NULL,
+    permission_id BIGINT                  NOT NULL,
+    created_at    TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at    TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
-create unique index rbac_role_permissions_unique
-    on public.rbac_role_permissions (role_id, permission_id);
+CREATE UNIQUE INDEX rbac_role_permissions_unique
+    ON public.rbac_role_permissions (role_id, permission_id);
 
-alter table public.rbac_role_permissions
-    add constraint rbac_role_permissions_roles_fk
-        foreign key (role_id) references public.rbac_roles (id)
-            on delete cascade;
+ALTER TABLE public.rbac_role_permissions
+    ADD CONSTRAINT rbac_role_permissions_roles_fk
+        FOREIGN KEY (role_id) REFERENCES public.rbac_roles (id)
+            ON DELETE CASCADE;
 
-alter table public.rbac_role_permissions
-    add constraint rbac_role_permissions_permissions_fk
-        foreign key (permission_id) references public.rbac_permissions (id)
-            on delete cascade;
+ALTER TABLE public.rbac_role_permissions
+    ADD CONSTRAINT rbac_role_permissions_permissions_fk
+        FOREIGN KEY (permission_id) REFERENCES public.rbac_permissions (id)
+            ON DELETE CASCADE;
 
-create table public.rbac_user_roles
+CREATE TABLE public.rbac_user_roles
 (
-    id         bigint generated always as identity
-        constraint rbac_user_roles_pk
-            primary key,
-    user_id    bigint                  not null,
-    role_id    bigint                  not null,
-    created_at timestamp default now() not null,
-    updated_at timestamp default now() not null
+    id         BIGINT GENERATED ALWAYS AS IDENTITY
+        CONSTRAINT rbac_user_roles_pk
+            PRIMARY KEY,
+    user_id    BIGINT                  NOT NULL,
+    role_id    BIGINT                  NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
-create unique index rbac_user_roles_unique
-    on public.rbac_user_roles (user_id, role_id);
+CREATE UNIQUE INDEX rbac_user_roles_unique
+    ON public.rbac_user_roles (user_id, role_id);
 
-alter table public.rbac_user_roles
-    add constraint rbac_user_roles_roles_fk
-        foreign key (role_id) references public.rbac_roles (id)
-            on delete cascade;
+ALTER TABLE public.rbac_user_roles
+    ADD CONSTRAINT rbac_user_roles_roles_fk
+        FOREIGN KEY (role_id) REFERENCES public.rbac_roles (id)
+            ON DELETE CASCADE;
 
-alter table public.rbac_user_roles
-    add constraint rbac_user_roles_users_fk
-        foreign key (user_id) references public.users (id)
-            on delete cascade;
+ALTER TABLE public.rbac_user_roles
+    ADD CONSTRAINT rbac_user_roles_users_fk
+        FOREIGN KEY (user_id) REFERENCES public.users (id)
+            ON DELETE CASCADE;

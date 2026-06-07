@@ -5,6 +5,7 @@ import (
 
 	"goxus/src/internal/app/goxus/cli"
 	configapp "goxus/src/internal/app/goxus/config"
+	settingsdomain "goxus/src/internal/app/goxus/domain/settings"
 	userdomain "goxus/src/internal/app/goxus/domain/user"
 	"goxus/src/internal/pkg/db/goxus"
 	"goxus/src/internal/pkg/services/rbac"
@@ -62,23 +63,34 @@ type DomainService interface {
 	// DeleteAvatar removes the custom avatar for a user.
 	// After deletion, GetAvatar will return the default avatar.
 	DeleteAvatar(ctx context.Context, userID int64) error
+
+	// ---- Settings domain ----
+
+	// GetSettingsDefinitions returns all setting definitions enriched with type and group info.
+	GetSettingsDefinitions(ctx context.Context) ([]*settingsdomain.SettingsDefinition, error)
+	// GetUserSettings returns all settings with user-specific values.
+	GetUserSettings(ctx context.Context, userID int64) ([]*settingsdomain.UserSetting, error)
+	// UpsertUserSetting creates or updates a user-specific setting value.
+	UpsertUserSetting(ctx context.Context, userID, settingsID int64, value goxus.JSON) error
 }
 
 // AppDomain is the concrete implementation of DomainService.
 // It holds all internal services and orchestrates business flows.
 type AppDomain struct {
-	Cli    *cli.Config
-	Config *configapp.Config
-	Rbac   rbac.Service
-	User   userdomain.Service
+	Cli      *cli.Config
+	Config   *configapp.Config
+	Rbac     rbac.Service
+	User     userdomain.Service
+	Settings settingsdomain.Service
 }
 
-func New(cliConfig cli.Service, appConfig configapp.Service, rbacService rbac.Service, userService userdomain.Service) DomainService {
+func New(cliConfig cli.Service, appConfig configapp.Service, rbacService rbac.Service, userService userdomain.Service, settingsService settingsdomain.Service) DomainService {
 	return &AppDomain{
-		Cli:    cliConfig.(*cli.Config),
-		Config: appConfig.Get(),
-		Rbac:   rbacService,
-		User:   userService,
+		Cli:      cliConfig.(*cli.Config),
+		Config:   appConfig.Get(),
+		Rbac:     rbacService,
+		User:     userService,
+		Settings: settingsService,
 	}
 }
 
@@ -165,4 +177,19 @@ func (d *AppDomain) UploadAvatar(ctx context.Context, userID int64, data []byte)
 
 func (d *AppDomain) DeleteAvatar(ctx context.Context, userID int64) error {
 	return d.User.DeleteAvatar(ctx, userID)
+}
+
+// ---- Settings delegation ----
+
+func (d *AppDomain) GetSettingsDefinitions(ctx context.Context) ([]*settingsdomain.SettingsDefinition, error) {
+	return d.Settings.GetDefinitions()
+}
+
+func (d *AppDomain) GetUserSettings(ctx context.Context, userID int64) ([]*settingsdomain.UserSetting, error) {
+	return d.Settings.GetUserSettings(userID)
+}
+
+func (d *AppDomain) UpsertUserSetting(ctx context.Context, userID, settingsID int64, value goxus.JSON) error {
+	_, err := d.Settings.UpsertUserSetting(userID, settingsID, value)
+	return err
 }

@@ -1,4 +1,4 @@
-drop table if exists public.rbac_user_roles;
-drop table if exists public.rbac_role_permissions;
-drop table if exists public.rbac_permissions;
-drop table if exists public.rbac_roles;
+DROP TABLE IF EXISTS public.rbac_user_roles;
+DROP TABLE IF EXISTS public.rbac_role_permissions;
+DROP TABLE IF EXISTS public.rbac_permissions;
+DROP TABLE IF EXISTS public.rbac_roles;

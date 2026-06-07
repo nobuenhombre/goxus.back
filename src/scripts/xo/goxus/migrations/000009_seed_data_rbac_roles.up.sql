@@ -43,7 +43,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- 6. Create user Ivan Data Worker
 INSERT INTO public.users (name, email, password, email_verified_at)
-VALUES ('Ivan Data Worker', 'data.worker.nobuenhombre@yandex.ru', '123', now())
+VALUES ('Ivan Data Worker', 'data.worker.nobuenhombre@yandex.ru', '123', NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- 7. Assign data_operator and data_analytics roles to Ivan Data Worker

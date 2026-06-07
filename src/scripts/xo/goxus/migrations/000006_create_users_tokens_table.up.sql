@@ -1,26 +1,26 @@
-create table public.users_tokens
+CREATE TABLE public.users_tokens
 (
-    id           bigint generated always as identity,
-    token        varchar(255)            not null,
-    user_id      bigint                  not null,
-    last_used_at timestamp,
-    created_at   timestamp default now() not null,
-    updated_at   timestamp default now() not null,
-    deleted_at   timestamp
+    id           BIGINT GENERATED ALWAYS AS IDENTITY,
+    token        VARCHAR(255)            NOT NULL,
+    user_id      BIGINT                  NOT NULL,
+    last_used_at TIMESTAMP,
+    created_at   TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at   TIMESTAMP DEFAULT NOW() NOT NULL,
+    deleted_at   TIMESTAMP
 );
 
 -- primary key
-alter table public.users_tokens
-    add constraint users_tokens_pk primary key (id);
+ALTER TABLE public.users_tokens
+    ADD CONSTRAINT users_tokens_pk PRIMARY KEY (id);
 
 -- foreign key to users
-alter table public.users_tokens
-    add constraint users_tokens_users_fk foreign key (user_id) references public.users (id) on delete cascade;
+ALTER TABLE public.users_tokens
+    ADD CONSTRAINT users_tokens_users_fk FOREIGN KEY (user_id) REFERENCES public.users (id) ON DELETE CASCADE;
 
 -- unique token for fast lookup
-create unique index users_tokens_token_uindex
-    on public.users_tokens (token);
+CREATE UNIQUE INDEX users_tokens_token_uindex
+    ON public.users_tokens (token);
 
 -- index for user token queries
-create index users_tokens_user_id_index
-    on public.users_tokens (user_id);
+CREATE INDEX users_tokens_user_id_index
+    ON public.users_tokens (user_id);

@@ -14,7 +14,11 @@ type DbGoxusRepo struct {
 	RbacRolePermission IRbacRolePermissionRepository
 	RbacUserRole       IRbacUserRoleRepository
 	SchemaMigration    ISchemaMigrationRepository
+	Setting            ISettingRepository
+	SettingsGroup      ISettingsGroupRepository
+	SettingsType       ISettingsTypeRepository
 	User               IUserRepository
+	UsersSetting       IUsersSettingRepository
 	UsersToken         IUsersTokenRepository
 	UserWithRole       IUserWithRoleRepository
 }
@@ -32,7 +36,11 @@ func NewDbGoxusRepository(config *pgxdb.Config, log types.SQLLoggerFunc) (*DbGox
 		RbacRolePermission: NewRbacRolePermissionRepository(db),
 		RbacUserRole:       NewRbacUserRoleRepository(db),
 		SchemaMigration:    NewSchemaMigrationRepository(db),
+		Setting:            NewSettingRepository(db),
+		SettingsGroup:      NewSettingsGroupRepository(db),
+		SettingsType:       NewSettingsTypeRepository(db),
 		User:               NewUserRepository(db),
+		UsersSetting:       NewUsersSettingRepository(db),
 		UsersToken:         NewUsersTokenRepository(db),
 		UserWithRole:       NewUserWithRoleRepository(db),
 	}, nil

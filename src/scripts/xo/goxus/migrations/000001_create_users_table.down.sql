@@ -1,1 +1,1 @@
-drop table if exists public.users;
+DROP TABLE IF EXISTS public.users;

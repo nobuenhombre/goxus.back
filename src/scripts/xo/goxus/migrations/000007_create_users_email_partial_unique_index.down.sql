@@ -1,2 +1,2 @@
 -- drop the full unique index
-drop index if exists public.users_email_uindex;
+DROP INDEX IF EXISTS public.users_email_uindex;

@@ -1,1 +1,1 @@
-drop table if exists public.users_tokens;
+DROP TABLE IF EXISTS public.users_tokens;

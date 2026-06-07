@@ -14,6 +14,7 @@ import (
 	"goxus/src/internal/app/goxus/cron-job/jobs/example"
 	"goxus/src/internal/app/goxus/cron-job/jobs/token-cleanup"
 	"goxus/src/internal/app/goxus/domain"
+	"goxus/src/internal/app/goxus/domain/settings"
 	"goxus/src/internal/app/goxus/domain/user"
 	"goxus/src/internal/app/goxus/log"
 	"goxus/src/internal/pkg/db/goxus"
@@ -71,7 +72,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	domainService, cleanup7, err := domainapp.ProvideDomain(service, configappService, rbacService, userdomainService)
+	settingsdomainService, cleanup7, err := settingsdomain.ProvideSettingsService(dbGoxusRepo)
 	if err != nil {
 		cleanup6()
 		cleanup5()
@@ -81,7 +82,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	iLogFile, cleanup8, err := logfile.ProvideLogFile(service)
+	domainService, cleanup8, err := domainapp.ProvideDomain(service, configappService, rbacService, userdomainService, settingsdomainService)
 	if err != nil {
 		cleanup7()
 		cleanup6()
@@ -92,7 +93,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	ratelimitService, cleanup9, err := ratelimit.ProvideRateLimiter(configappService)
+	iLogFile, cleanup9, err := logfile.ProvideLogFile(service)
 	if err != nil {
 		cleanup8()
 		cleanup7()
@@ -104,7 +105,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	ihttpServer, cleanup10, err := server.ProvideAPI(configappService, iLogFile, domainService, ratelimitService)
+	ratelimitService, cleanup10, err := ratelimit.ProvideRateLimiter(configappService)
 	if err != nil {
 		cleanup9()
 		cleanup8()
@@ -117,7 +118,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	job, cleanup11, err := examplejobs.ProvideExampleJob(configappService, domainService)
+	ihttpServer, cleanup11, err := server.ProvideAPI(configappService, iLogFile, domainService, ratelimitService)
 	if err != nil {
 		cleanup10()
 		cleanup9()
@@ -131,7 +132,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	tokencleanupJob, cleanup12, err := tokencleanup.ProvideTokenCleanupJob(configappService, domainService)
+	job, cleanup12, err := examplejobs.ProvideExampleJob(configappService, domainService)
 	if err != nil {
 		cleanup11()
 		cleanup10()
@@ -146,7 +147,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	cron, cleanup13, err := cronjobs.ProvideCronScheduler(job, tokencleanupJob, configappService)
+	tokencleanupJob, cleanup13, err := tokencleanup.ProvideTokenCleanupJob(configappService, domainService)
 	if err != nil {
 		cleanup12()
 		cleanup11()
@@ -162,7 +163,7 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	iApp, cleanup14, err := newApp(service, domainService, ihttpServer, cron)
+	cron, cleanup14, err := cronjobs.ProvideCronScheduler(job, tokencleanupJob, configappService)
 	if err != nil {
 		cleanup13()
 		cleanup12()
@@ -179,7 +180,26 @@ func initializeApp() (IApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	iApp, cleanup15, err := newApp(service, domainService, ihttpServer, cron)
+	if err != nil {
+		cleanup14()
+		cleanup13()
+		cleanup12()
+		cleanup11()
+		cleanup10()
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	return iApp, func() {
+		cleanup15()
 		cleanup14()
 		cleanup13()
 		cleanup12()
