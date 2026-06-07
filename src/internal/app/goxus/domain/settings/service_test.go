@@ -46,7 +46,7 @@ func TestGetDefinitions_ThemeSetting(t *testing.T) {
 	}
 	require.NotNil(t, theme, "Theme setting should be seeded")
 
-	assert.Equal(t, "listChecks", theme.Type)
+	assert.Equal(t, "listRadios", theme.Type)
 	assert.Equal(t, "Appearance", theme.Group)
 	assert.Equal(t, "Select the theme for the dashboard.", theme.Description)
 	assert.NotNil(t, theme.AvailableValues)
