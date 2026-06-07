@@ -36,6 +36,6 @@ SELECT st.id,
        }'::JSON
 FROM public.settings_types st
          CROSS JOIN public.settings_groups sg
-WHERE st.name = 'listChecks'
+WHERE st.name = 'listRadios'
   AND sg.name = 'Appearance'
 ON CONFLICT DO NOTHING;
