@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -14,19 +15,15 @@ import (
 // ---- Avatar HTTP handlers ----
 
 // GetUserAvatar handles GET /api/v1/entity/user/:id/avatar
+// Public endpoint — no auth required, <img> tags can't send Bearer tokens.
 func (h *HttpHandler) GetUserAvatar(c *gin.Context) {
-	ctx, ok := authContext(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
 	}
 
+	ctx := context.Background()
 	data, contentType, err := h.Domain.GetAvatar(ctx, id)
 	if err != nil {
 		if errors.Is(err, userdomain.ErrAvatarNotFound) {

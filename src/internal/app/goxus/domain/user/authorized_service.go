@@ -237,23 +237,8 @@ func (a *authorizedService) DeleteExpiredTokens(ctx context.Context, ttlDays int
 }
 
 // GetAvatar returns a user's avatar image.
-// Requires user_view permission (except self-read: actorID == userID).
+// Public endpoint — no auth/RBAC required, <img> tags can't send Bearer tokens.
 func (a *authorizedService) GetAvatar(ctx context.Context, userID int64) ([]byte, string, error) {
-	actorID, ok := ActorIDFromContext(ctx)
-	if !ok {
-		return nil, "", ge.Pin(ErrAccessDenied)
-	}
-
-	if actorID != userID {
-		ok, err := a.rbacSvc.CheckUserPermission(actorID, permission.UserView)
-		if err != nil {
-			return nil, "", ge.Pin(err)
-		}
-		if !ok {
-			return nil, "", ge.Pin(ErrAccessDenied)
-		}
-	}
-
 	return a.inner.GetAvatar(ctx, userID)
 }
 

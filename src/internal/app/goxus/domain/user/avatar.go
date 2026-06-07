@@ -3,6 +3,7 @@ package userdomain
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"image"
@@ -16,6 +17,9 @@ import (
 
 	"github.com/nobuenhombre/suikat/pkg/ge"
 )
+
+//go:embed default_avatar.webp
+var embeddedDefaultAvatar []byte
 
 const (
 	// AvatarWidth is the required avatar image width in pixels.
@@ -59,6 +63,7 @@ func validateImageDimensions(data []byte) error {
 
 // GetAvatar returns the avatar image for a user.
 // Returns the user's custom avatar if it exists, otherwise the default avatar.
+// If the default avatar file does not exist on disk, the embedded default is used.
 func (s *impl) GetAvatar(_ context.Context, userID int64) ([]byte, string, error) {
 	// Try user-specific avatar first
 	path := avatarPath(s.cfg.Storage.AvatarsDir, userID)
@@ -71,17 +76,26 @@ func (s *impl) GetAvatar(_ context.Context, userID int64) ([]byte, string, error
 		return nil, "", ge.Pin(fmt.Errorf("reading avatar for user %d: %w", userID, err))
 	}
 
-	// Fall back to default avatar
+	// Fall back to default avatar on disk
 	defaultPath := defaultAvatarPath(s.cfg.Storage.AvatarsDir)
 	data, err = os.ReadFile(defaultPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, "", ge.Pin(fmt.Errorf("default avatar not found at %s: %w", defaultPath, ErrAvatarNotFound))
-		}
+	if err == nil {
+		return data, avatarContentType, nil
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
 		return nil, "", ge.Pin(fmt.Errorf("reading default avatar: %w", err))
 	}
 
-	return data, avatarContentType, nil
+	// Default avatar not on disk — write the embedded default for next time
+	if err := os.MkdirAll(s.cfg.Storage.AvatarsDir, 0o755); err != nil {
+		return nil, "", ge.Pin(fmt.Errorf("creating avatars directory: %w", err))
+	}
+	if err := os.WriteFile(defaultPath, embeddedDefaultAvatar, 0o644); err != nil {
+		return nil, "", ge.Pin(fmt.Errorf("writing default avatar: %w", err))
+	}
+
+	return embeddedDefaultAvatar, avatarContentType, nil
 }
 
 // UploadAvatar saves an avatar image for a user.

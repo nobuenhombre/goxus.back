@@ -64,11 +64,13 @@ func SetupRoutes(api *gin.RouterGroup, dom domainapp.DomainService, rl ratelimit
 				users.POST("/:id/roles", h.AssignUserRole)
 				users.DELETE("/:id/roles/:slug", h.RevokeUserRole)
 
-				// User avatar
-				users.GET("/:id/avatar", h.GetUserAvatar)
+				// User avatar (upload/delete require auth, get is public)
 				users.POST("/:id/avatar", h.UploadUserAvatar)
 				users.DELETE("/:id/avatar", h.DeleteUserAvatar)
 			}
 		}
+
+		// Avatar GET is public — browsers load it via <img> tags which can't send auth headers
+		v1.GET("/entity/user/:id/avatar", h.GetUserAvatar)
 	}
 }
