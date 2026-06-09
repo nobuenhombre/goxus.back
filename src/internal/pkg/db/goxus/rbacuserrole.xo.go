@@ -20,10 +20,14 @@ type RbacUserRole struct {
 	CreatedAt time.Time `json:"created_at"` // created_at
 	UpdatedAt time.Time `json:"updated_at"` // updated_at
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the RbacUserRole exists in the database.
 func (rur *RbacUserRole) Exists() bool {
 	return rur._exists
@@ -39,6 +43,9 @@ func (rur *RbacUserRole) Deleted() bool {
 	return rur._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the RbacUserRole to the database.
 func (rur *RbacUserRole) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -76,6 +83,10 @@ $1, $2, $3, $4
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the RbacUserRole in the database.
 func (rur *RbacUserRole) Update(db pgxdb.DBQuery) error {
@@ -166,6 +177,9 @@ EXCLUDED.id, EXCLUDED.user_id, EXCLUDED.role_id, EXCLUDED.created_at, EXCLUDED.u
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the RbacUserRole from the database.
 func (rur *RbacUserRole) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -206,6 +220,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllRbacUserRole returns all rows from 'public.rbac_user_roles',
 func GetAllRbacUserRole(db pgxdb.DBQuery) ([]*RbacUserRole, error) {
 	ctx := context.Background()
@@ -240,7 +256,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rur.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rur)
 	}
@@ -283,7 +301,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rur.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rur)
 	}
@@ -427,8 +447,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	rur._exists = true
 	rur._deleted = false
+	// @end-crud
 
 	return &rur, nil
 }
@@ -484,38 +506,6 @@ WHERE
 	return &rur, nil
 }
 
-// GetRbacUserRoleByIDCount retrieves count of rows from 'public.rbac_user_roles' by index 'rbac_user_roles_pk'.
-func GetRbacUserRoleByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_user_roles
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for RbacUserRole -----
 
 // RbacUserRoleByUserIDRoleID retrieves a row from 'public.rbac_user_roles' as a RbacUserRole.
@@ -553,38 +543,6 @@ WHERE
 	}
 
 	return &rur, nil
-}
-
-// GetRbacUserRoleByUserIDRoleIDCount retrieves count of rows from 'public.rbac_user_roles' by index 'rbac_user_roles_unique'.
-func GetRbacUserRoleByUserIDRoleIDCount(db pgxdb.DBQuery, userID int64, roleID int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_user_roles
-WHERE
-	user_id = $1 AND role_id = $2
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, userID, roleID).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), userID, roleID)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for RbacUserRole -----

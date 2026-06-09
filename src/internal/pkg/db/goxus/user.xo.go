@@ -24,10 +24,14 @@ type User struct {
 	UpdatedAt       time.Time   `json:"updated_at"`        // updated_at
 	DeletedAt       pq.NullTime `json:"deleted_at"`        // deleted_at
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the User exists in the database.
 func (u *User) Exists() bool {
 	return u._exists
@@ -43,6 +47,9 @@ func (u *User) Deleted() bool {
 	return u._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the User to the database.
 func (u *User) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -80,6 +87,10 @@ $1, $2, $3, $4, $5, $6, $7
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the User in the database.
 func (u *User) Update(db pgxdb.DBQuery) error {
@@ -170,6 +181,9 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.email, EXCLUDED.password, EXCLUDED.email_ve
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the User from the database.
 func (u *User) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -210,6 +224,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllUser returns all rows from 'public.users',
 func GetAllUser(db pgxdb.DBQuery) ([]*User, error) {
 	ctx := context.Background()
@@ -244,7 +260,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		u.SetExists(true)
+		// @end-crud
 
 		res = append(res, &u)
 	}
@@ -287,7 +305,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		u.SetExists(true)
+		// @end-crud
 
 		res = append(res, &u)
 	}
@@ -431,8 +451,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	u._exists = true
 	u._deleted = false
+	// @end-crud
 
 	return &u, nil
 }
@@ -474,38 +496,6 @@ WHERE
 	return &u, nil
 }
 
-// GetUserByEmailCount retrieves count of rows from 'public.users' by index 'users_email_uindex'.
-func GetUserByEmailCount(db pgxdb.DBQuery, email string) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users
-WHERE
-	email = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, email).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), email)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for User -----
 
 // UserByID retrieves a row from 'public.users' as a User.
@@ -545,38 +535,6 @@ WHERE
 	return &u, nil
 }
 
-// GetUserByIDCount retrieves count of rows from 'public.users' by index 'users_pk'.
-func GetUserByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for User -----
 
 // GetActiveUserByEmail runs a custom query, returning results as User.
@@ -610,36 +568,4 @@ func GetActiveUserByEmail(db pgxdb.DBQuery, email string) (*User, error) {
 	u._deleted = false
 
 	return &u, nil
-}
-
-// GetActiveUserByEmailCount runs a custom count query
-func GetActiveUserByEmailCount(db pgxdb.DBQuery, email string) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	var sqlstr = `SELECT ` + "\n" +
-		`id, name, email, password, email_verified_at, created_at, updated_at, deleted_at ` + "\n" +
-		`FROM ` + "\n" +
-		`public.users ` + "\n" +
-		`WHERE ` + "\n" +
-		`email = $1 ` + "\n" +
-		`AND deleted_at IS NULL`
-
-	countSQL := `SELECT COUNT(*) FROM (` + sqlstr + `) AS count_query`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, countSQL, email).Scan(&count)
-
-	db.WriteLog(countSQL, time.Since(start), email)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }

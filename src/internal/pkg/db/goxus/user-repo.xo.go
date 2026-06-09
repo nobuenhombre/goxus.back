@@ -17,11 +17,8 @@ type IUserRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*User, error)
 	GetUserByEmail(email string) (*User, error)
-	GetUserByEmailCount(email string) (int64, error)
 	GetUserByID(id int64) (*User, error)
-	GetUserByIDCount(id int64) (int64, error)
 	GetActiveUserByEmail(email string) (*User, error)
-	GetActiveUserByEmailCount(email string) (int64, error)
 }
 
 // Save saves the User to the database.
@@ -84,27 +81,12 @@ func (repo *UserRepository) GetUserByEmail(email string) (*User, error) {
 	return GetUserByEmail(repo.db, email)
 }
 
-// GetUserByEmailCount возвращает количество записей по индексу 'users_email_uindex'.
-func (repo *UserRepository) GetUserByEmailCount(email string) (int64, error) {
-	return GetUserByEmailCount(repo.db, email)
-}
-
 // GetUserByID возвращает одну запись по индексу 'users_pk'.
 func (repo *UserRepository) GetUserByID(id int64) (*User, error) {
 	return GetUserByID(repo.db, id)
 }
 
-// GetUserByIDCount возвращает количество записей по индексу 'users_pk'.
-func (repo *UserRepository) GetUserByIDCount(id int64) (int64, error) {
-	return GetUserByIDCount(repo.db, id)
-}
-
 // GetActiveUserByEmail runs a custom query, returning results as User.
 func (repo *UserRepository) GetActiveUserByEmail(email string) (*User, error) {
 	return GetActiveUserByEmail(repo.db, email)
-}
-
-// GetActiveUserByEmailCount runs a custom count query from repository
-func (repo *UserRepository) GetActiveUserByEmailCount(email string) (int64, error) {
-	return GetActiveUserByEmailCount(repo.db, email)
 }

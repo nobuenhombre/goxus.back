@@ -17,9 +17,7 @@ type IRbacPermissionRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*RbacPermission, error)
 	GetRbacPermissionByID(id int64) (*RbacPermission, error)
-	GetRbacPermissionByIDCount(id int64) (int64, error)
 	GetRbacPermissionBySlug(slug string) (*RbacPermission, error)
-	GetRbacPermissionBySlugCount(slug string) (int64, error)
 	GetPermissionsByRoleSlug(roleSlug string) ([]*RbacPermission, error)
 	GetPermissionsByRoleSlugCount(roleSlug string) (int64, error)
 	GetPermissionsByRoleSlugWithPagination(roleSlug string, limit, offset int) ([]*RbacPermission, error)
@@ -88,19 +86,9 @@ func (repo *RbacPermissionRepository) GetRbacPermissionByID(id int64) (*RbacPerm
 	return GetRbacPermissionByID(repo.db, id)
 }
 
-// GetRbacPermissionByIDCount возвращает количество записей по индексу 'rbac_permissions_pk'.
-func (repo *RbacPermissionRepository) GetRbacPermissionByIDCount(id int64) (int64, error) {
-	return GetRbacPermissionByIDCount(repo.db, id)
-}
-
 // GetRbacPermissionBySlug возвращает одну запись по индексу 'rbac_permissions_slug_uindex'.
 func (repo *RbacPermissionRepository) GetRbacPermissionBySlug(slug string) (*RbacPermission, error) {
 	return GetRbacPermissionBySlug(repo.db, slug)
-}
-
-// GetRbacPermissionBySlugCount возвращает количество записей по индексу 'rbac_permissions_slug_uindex'.
-func (repo *RbacPermissionRepository) GetRbacPermissionBySlugCount(slug string) (int64, error) {
-	return GetRbacPermissionBySlugCount(repo.db, slug)
 }
 
 // GetPermissionsByRoleSlug runs a custom query, returning results as RbacPermission.

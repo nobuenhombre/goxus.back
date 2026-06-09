@@ -20,10 +20,14 @@ type RbacRolePermission struct {
 	CreatedAt    time.Time `json:"created_at"`    // created_at
 	UpdatedAt    time.Time `json:"updated_at"`    // updated_at
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the RbacRolePermission exists in the database.
 func (rrp *RbacRolePermission) Exists() bool {
 	return rrp._exists
@@ -39,6 +43,9 @@ func (rrp *RbacRolePermission) Deleted() bool {
 	return rrp._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the RbacRolePermission to the database.
 func (rrp *RbacRolePermission) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -76,6 +83,10 @@ $1, $2, $3, $4
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the RbacRolePermission in the database.
 func (rrp *RbacRolePermission) Update(db pgxdb.DBQuery) error {
@@ -166,6 +177,9 @@ EXCLUDED.id, EXCLUDED.role_id, EXCLUDED.permission_id, EXCLUDED.created_at, EXCL
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the RbacRolePermission from the database.
 func (rrp *RbacRolePermission) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -206,6 +220,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllRbacRolePermission returns all rows from 'public.rbac_role_permissions',
 func GetAllRbacRolePermission(db pgxdb.DBQuery) ([]*RbacRolePermission, error) {
 	ctx := context.Background()
@@ -240,7 +256,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rrp.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rrp)
 	}
@@ -283,7 +301,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rrp.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rrp)
 	}
@@ -427,8 +447,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	rrp._exists = true
 	rrp._deleted = false
+	// @end-crud
 
 	return &rrp, nil
 }
@@ -484,38 +506,6 @@ WHERE
 	return &rrp, nil
 }
 
-// GetRbacRolePermissionByIDCount retrieves count of rows from 'public.rbac_role_permissions' by index 'rbac_role_permissions_pk'.
-func GetRbacRolePermissionByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_role_permissions
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for RbacRolePermission -----
 
 // RbacRolePermissionByRoleIDPermissionID retrieves a row from 'public.rbac_role_permissions' as a RbacRolePermission.
@@ -553,38 +543,6 @@ WHERE
 	}
 
 	return &rrp, nil
-}
-
-// GetRbacRolePermissionByRoleIDPermissionIDCount retrieves count of rows from 'public.rbac_role_permissions' by index 'rbac_role_permissions_unique'.
-func GetRbacRolePermissionByRoleIDPermissionIDCount(db pgxdb.DBQuery, roleID int64, permissionID int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_role_permissions
-WHERE
-	role_id = $1 AND permission_id = $2
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, roleID, permissionID).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), roleID, permissionID)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for RbacRolePermission -----

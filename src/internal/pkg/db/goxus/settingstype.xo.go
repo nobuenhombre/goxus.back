@@ -19,10 +19,14 @@ type SettingsType struct {
 	Name        string         `json:"name"`        // name
 	Description sql.NullString `json:"description"` // description
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the SettingsType exists in the database.
 func (st *SettingsType) Exists() bool {
 	return st._exists
@@ -38,6 +42,9 @@ func (st *SettingsType) Deleted() bool {
 	return st._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the SettingsType to the database.
 func (st *SettingsType) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -75,6 +82,10 @@ $1, $2
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the SettingsType in the database.
 func (st *SettingsType) Update(db pgxdb.DBQuery) error {
@@ -165,6 +176,9 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.description
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the SettingsType from the database.
 func (st *SettingsType) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -205,6 +219,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllSettingsType returns all rows from 'public.settings_types',
 func GetAllSettingsType(db pgxdb.DBQuery) ([]*SettingsType, error) {
 	ctx := context.Background()
@@ -239,7 +255,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		st.SetExists(true)
+		// @end-crud
 
 		res = append(res, &st)
 	}
@@ -282,7 +300,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		st.SetExists(true)
+		// @end-crud
 
 		res = append(res, &st)
 	}
@@ -426,8 +446,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	st._exists = true
 	st._deleted = false
+	// @end-crud
 
 	return &st, nil
 }
@@ -469,38 +491,6 @@ WHERE
 	return &st, nil
 }
 
-// GetSettingsTypeByNameCount retrieves count of rows from 'public.settings_types' by index 'settings_types_name_uindex'.
-func GetSettingsTypeByNameCount(db pgxdb.DBQuery, name string) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.settings_types
-WHERE
-	name = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, name).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), name)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for SettingsType -----
 
 // SettingsTypeByID retrieves a row from 'public.settings_types' as a SettingsType.
@@ -538,38 +528,6 @@ WHERE
 	}
 
 	return &st, nil
-}
-
-// GetSettingsTypeByIDCount retrieves count of rows from 'public.settings_types' by index 'settings_types_pk'.
-func GetSettingsTypeByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.settings_types
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for SettingsType -----

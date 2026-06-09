@@ -19,10 +19,14 @@ type UsersSetting struct {
 	SettingsID int64 `json:"settings_id"` // settings_id
 	Value      JSON  `json:"value"`       // value
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the UsersSetting exists in the database.
 func (us *UsersSetting) Exists() bool {
 	return us._exists
@@ -38,6 +42,9 @@ func (us *UsersSetting) Deleted() bool {
 	return us._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the UsersSetting to the database.
 func (us *UsersSetting) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -75,6 +82,10 @@ $1, $2, $3
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the UsersSetting in the database.
 func (us *UsersSetting) Update(db pgxdb.DBQuery) error {
@@ -165,6 +176,9 @@ EXCLUDED.id, EXCLUDED.user_id, EXCLUDED.settings_id, EXCLUDED.value
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the UsersSetting from the database.
 func (us *UsersSetting) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -205,6 +219,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllUsersSetting returns all rows from 'public.users_settings',
 func GetAllUsersSetting(db pgxdb.DBQuery) ([]*UsersSetting, error) {
 	ctx := context.Background()
@@ -239,7 +255,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		us.SetExists(true)
+		// @end-crud
 
 		res = append(res, &us)
 	}
@@ -282,7 +300,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		us.SetExists(true)
+		// @end-crud
 
 		res = append(res, &us)
 	}
@@ -426,8 +446,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	us._exists = true
 	us._deleted = false
+	// @end-crud
 
 	return &us, nil
 }
@@ -476,38 +498,6 @@ WHERE
 	return &us, nil
 }
 
-// GetUsersSettingByIDCount retrieves count of rows from 'public.users_settings' by index 'users_settings_pk'.
-func GetUsersSettingByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users_settings
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for UsersSetting -----
 
 // UsersSettingByUserIDSettingsID retrieves a row from 'public.users_settings' as a UsersSetting.
@@ -545,38 +535,6 @@ WHERE
 	}
 
 	return &us, nil
-}
-
-// GetUsersSettingByUserIDSettingsIDCount retrieves count of rows from 'public.users_settings' by index 'users_settings_user_id_settings_id_idx'.
-func GetUsersSettingByUserIDSettingsIDCount(db pgxdb.DBQuery, userID int64, settingsID int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users_settings
-WHERE
-	user_id = $1 AND settings_id = $2
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, userID, settingsID).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), userID, settingsID)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for UsersSetting -----

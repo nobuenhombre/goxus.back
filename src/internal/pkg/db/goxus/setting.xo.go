@@ -23,10 +23,14 @@ type Setting struct {
 	AvailableValues JSON           `json:"available_values"` // available_values
 	DefaultValue    JSON           `json:"default_value"`    // default_value
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the Setting exists in the database.
 func (s *Setting) Exists() bool {
 	return s._exists
@@ -42,6 +46,9 @@ func (s *Setting) Deleted() bool {
 	return s._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the Setting to the database.
 func (s *Setting) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -79,6 +86,10 @@ $1, $2, $3, $4, $5, $6
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the Setting in the database.
 func (s *Setting) Update(db pgxdb.DBQuery) error {
@@ -169,6 +180,9 @@ EXCLUDED.id, EXCLUDED.type_id, EXCLUDED.group_id, EXCLUDED.name, EXCLUDED.descri
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the Setting from the database.
 func (s *Setting) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -209,6 +223,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllSetting returns all rows from 'public.settings',
 func GetAllSetting(db pgxdb.DBQuery) ([]*Setting, error) {
 	ctx := context.Background()
@@ -243,7 +259,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		s.SetExists(true)
+		// @end-crud
 
 		res = append(res, &s)
 	}
@@ -286,7 +304,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		s.SetExists(true)
+		// @end-crud
 
 		res = append(res, &s)
 	}
@@ -430,8 +450,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	s._exists = true
 	s._deleted = false
+	// @end-crud
 
 	return &s, nil
 }
@@ -485,38 +507,6 @@ WHERE
 	}
 
 	return &s, nil
-}
-
-// GetSettingByIDCount retrieves count of rows from 'public.settings' by index 'settings_pk'.
-func GetSettingByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.settings
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for Setting -----

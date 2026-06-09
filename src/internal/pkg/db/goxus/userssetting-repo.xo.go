@@ -17,9 +17,7 @@ type IUsersSettingRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*UsersSetting, error)
 	GetUsersSettingByID(id int64) (*UsersSetting, error)
-	GetUsersSettingByIDCount(id int64) (int64, error)
 	GetUsersSettingByUserIDSettingsID(userID int64, settingsID int64) (*UsersSetting, error)
-	GetUsersSettingByUserIDSettingsIDCount(userID int64, settingsID int64) (int64, error)
 }
 
 // Save saves the UsersSetting to the database.
@@ -82,17 +80,7 @@ func (repo *UsersSettingRepository) GetUsersSettingByID(id int64) (*UsersSetting
 	return GetUsersSettingByID(repo.db, id)
 }
 
-// GetUsersSettingByIDCount возвращает количество записей по индексу 'users_settings_pk'.
-func (repo *UsersSettingRepository) GetUsersSettingByIDCount(id int64) (int64, error) {
-	return GetUsersSettingByIDCount(repo.db, id)
-}
-
 // GetUsersSettingByUserIDSettingsID возвращает одну запись по индексу 'users_settings_user_id_settings_id_idx'.
 func (repo *UsersSettingRepository) GetUsersSettingByUserIDSettingsID(userID int64, settingsID int64) (*UsersSetting, error) {
 	return GetUsersSettingByUserIDSettingsID(repo.db, userID, settingsID)
-}
-
-// GetUsersSettingByUserIDSettingsIDCount возвращает количество записей по индексу 'users_settings_user_id_settings_id_idx'.
-func (repo *UsersSettingRepository) GetUsersSettingByUserIDSettingsIDCount(userID int64, settingsID int64) (int64, error) {
-	return GetUsersSettingByUserIDSettingsIDCount(repo.db, userID, settingsID)
 }

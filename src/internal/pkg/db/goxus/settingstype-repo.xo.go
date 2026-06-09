@@ -17,9 +17,7 @@ type ISettingsTypeRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*SettingsType, error)
 	GetSettingsTypeByName(name string) (*SettingsType, error)
-	GetSettingsTypeByNameCount(name string) (int64, error)
 	GetSettingsTypeByID(id int64) (*SettingsType, error)
-	GetSettingsTypeByIDCount(id int64) (int64, error)
 }
 
 // Save saves the SettingsType to the database.
@@ -82,17 +80,7 @@ func (repo *SettingsTypeRepository) GetSettingsTypeByName(name string) (*Setting
 	return GetSettingsTypeByName(repo.db, name)
 }
 
-// GetSettingsTypeByNameCount возвращает количество записей по индексу 'settings_types_name_uindex'.
-func (repo *SettingsTypeRepository) GetSettingsTypeByNameCount(name string) (int64, error) {
-	return GetSettingsTypeByNameCount(repo.db, name)
-}
-
 // GetSettingsTypeByID возвращает одну запись по индексу 'settings_types_pk'.
 func (repo *SettingsTypeRepository) GetSettingsTypeByID(id int64) (*SettingsType, error) {
 	return GetSettingsTypeByID(repo.db, id)
-}
-
-// GetSettingsTypeByIDCount возвращает количество записей по индексу 'settings_types_pk'.
-func (repo *SettingsTypeRepository) GetSettingsTypeByIDCount(id int64) (int64, error) {
-	return GetSettingsTypeByIDCount(repo.db, id)
 }

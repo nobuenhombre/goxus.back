@@ -20,10 +20,14 @@ type RbacPermission struct {
 	CreatedAt time.Time `json:"created_at"` // created_at
 	UpdatedAt time.Time `json:"updated_at"` // updated_at
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the RbacPermission exists in the database.
 func (rp *RbacPermission) Exists() bool {
 	return rp._exists
@@ -39,6 +43,9 @@ func (rp *RbacPermission) Deleted() bool {
 	return rp._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the RbacPermission to the database.
 func (rp *RbacPermission) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -76,6 +83,10 @@ $1, $2, $3, $4
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the RbacPermission in the database.
 func (rp *RbacPermission) Update(db pgxdb.DBQuery) error {
@@ -166,6 +177,9 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.slug, EXCLUDED.created_at, EXCLUDED.updated
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the RbacPermission from the database.
 func (rp *RbacPermission) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -206,6 +220,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllRbacPermission returns all rows from 'public.rbac_permissions',
 func GetAllRbacPermission(db pgxdb.DBQuery) ([]*RbacPermission, error) {
 	ctx := context.Background()
@@ -240,7 +256,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rp.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rp)
 	}
@@ -283,7 +301,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		rp.SetExists(true)
+		// @end-crud
 
 		res = append(res, &rp)
 	}
@@ -427,8 +447,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	rp._exists = true
 	rp._deleted = false
+	// @end-crud
 
 	return &rp, nil
 }
@@ -470,38 +492,6 @@ WHERE
 	return &rp, nil
 }
 
-// GetRbacPermissionByIDCount retrieves count of rows from 'public.rbac_permissions' by index 'rbac_permissions_pk'.
-func GetRbacPermissionByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_permissions
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for RbacPermission -----
 
 // RbacPermissionBySlug retrieves a row from 'public.rbac_permissions' as a RbacPermission.
@@ -539,38 +529,6 @@ WHERE
 	}
 
 	return &rp, nil
-}
-
-// GetRbacPermissionBySlugCount retrieves count of rows from 'public.rbac_permissions' by index 'rbac_permissions_slug_uindex'.
-func GetRbacPermissionBySlugCount(db pgxdb.DBQuery, slug string) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.rbac_permissions
-WHERE
-	slug = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, slug).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), slug)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for RbacPermission -----

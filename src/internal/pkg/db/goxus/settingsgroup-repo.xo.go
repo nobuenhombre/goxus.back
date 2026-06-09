@@ -17,7 +17,6 @@ type ISettingsGroupRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*SettingsGroup, error)
 	GetSettingsGroupByID(id int64) (*SettingsGroup, error)
-	GetSettingsGroupByIDCount(id int64) (int64, error)
 }
 
 // Save saves the SettingsGroup to the database.
@@ -78,9 +77,4 @@ func (repo *SettingsGroupRepository) GetLastID() (*SettingsGroup, error) {
 // GetSettingsGroupByID возвращает одну запись по индексу 'settings_groups_pk'.
 func (repo *SettingsGroupRepository) GetSettingsGroupByID(id int64) (*SettingsGroup, error) {
 	return GetSettingsGroupByID(repo.db, id)
-}
-
-// GetSettingsGroupByIDCount возвращает количество записей по индексу 'settings_groups_pk'.
-func (repo *SettingsGroupRepository) GetSettingsGroupByIDCount(id int64) (int64, error) {
-	return GetSettingsGroupByIDCount(repo.db, id)
 }

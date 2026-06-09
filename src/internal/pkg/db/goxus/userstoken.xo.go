@@ -23,10 +23,14 @@ type UsersToken struct {
 	UpdatedAt  time.Time   `json:"updated_at"`   // updated_at
 	DeletedAt  pq.NullTime `json:"deleted_at"`   // deleted_at
 
+	// @crud
 	// xo fields
 	_exists, _deleted bool
+	// @end-crud
+
 }
 
+// @crud
 // Exists determines if the UsersToken exists in the database.
 func (ut *UsersToken) Exists() bool {
 	return ut._exists
@@ -42,6 +46,9 @@ func (ut *UsersToken) Deleted() bool {
 	return ut._deleted
 }
 
+// @end-crud
+
+// @crud
 // Insert inserts the UsersToken to the database.
 func (ut *UsersToken) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -79,6 +86,10 @@ $1, $2, $3, $4, $5, $6
 
 	return nil
 }
+
+// @end-crud
+
+// @crud
 
 // Update updates the UsersToken in the database.
 func (ut *UsersToken) Update(db pgxdb.DBQuery) error {
@@ -169,6 +180,9 @@ EXCLUDED.id, EXCLUDED.token, EXCLUDED.user_id, EXCLUDED.last_used_at, EXCLUDED.c
 	return nil
 }
 
+// @end-crud
+
+// @crud
 // Delete deletes the UsersToken from the database.
 func (ut *UsersToken) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -209,6 +223,8 @@ WHERE id = $1
 	return nil
 }
 
+// @end-crud
+
 // GetAllUsersToken returns all rows from 'public.users_tokens',
 func GetAllUsersToken(db pgxdb.DBQuery) ([]*UsersToken, error) {
 	ctx := context.Background()
@@ -243,7 +259,9 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		ut.SetExists(true)
+		// @end-crud
 
 		res = append(res, &ut)
 	}
@@ -286,7 +304,9 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
+		// @crud
 		ut.SetExists(true)
+		// @end-crud
 
 		res = append(res, &ut)
 	}
@@ -430,8 +450,10 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
+	// @crud
 	ut._exists = true
 	ut._deleted = false
+	// @end-crud
 
 	return &ut, nil
 }
@@ -480,38 +502,6 @@ WHERE
 	return &ut, nil
 }
 
-// GetUsersTokenByIDCount retrieves count of rows from 'public.users_tokens' by index 'users_tokens_pk'.
-func GetUsersTokenByIDCount(db pgxdb.DBQuery, id int64) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users_tokens
-WHERE
-	id = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, id).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 // ----- Index Methods for UsersToken -----
 
 // UsersTokenByToken retrieves a row from 'public.users_tokens' as a UsersToken.
@@ -549,38 +539,6 @@ WHERE
 	}
 
 	return &ut, nil
-}
-
-// GetUsersTokenByTokenCount retrieves count of rows from 'public.users_tokens' by index 'users_tokens_token_uindex'.
-func GetUsersTokenByTokenCount(db pgxdb.DBQuery, token string) (int64, error) {
-	var err error
-
-	start := time.Now()
-
-	ctx := context.Background()
-
-	// sql query
-	// language=SQL
-	const sqlstr = `
-SELECT
-	COUNT(*)
-FROM
-	public.users_tokens
-WHERE
-	token = $1
-`
-
-	// run query
-	var count int64
-	err = db.QueryRow(ctx, sqlstr, token).Scan(&count)
-
-	db.WriteLog(sqlstr, time.Since(start), token)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 // ----- Index Methods for UsersToken -----

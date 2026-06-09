@@ -17,9 +17,7 @@ type IRbacUserRoleRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*RbacUserRole, error)
 	GetRbacUserRoleByID(id int64) (*RbacUserRole, error)
-	GetRbacUserRoleByIDCount(id int64) (int64, error)
 	GetRbacUserRoleByUserIDRoleID(userID int64, roleID int64) (*RbacUserRole, error)
-	GetRbacUserRoleByUserIDRoleIDCount(userID int64, roleID int64) (int64, error)
 	GetRbacUserRoleByRoleID(roleID int64) ([]*RbacUserRole, error)
 	GetRbacUserRoleByRoleIDCount(roleID int64) (int64, error)
 	GetRbacUserRoleByRoleIDWithPagination(roleID int64, limit, offset int) ([]*RbacUserRole, error)
@@ -85,19 +83,9 @@ func (repo *RbacUserRoleRepository) GetRbacUserRoleByID(id int64) (*RbacUserRole
 	return GetRbacUserRoleByID(repo.db, id)
 }
 
-// GetRbacUserRoleByIDCount возвращает количество записей по индексу 'rbac_user_roles_pk'.
-func (repo *RbacUserRoleRepository) GetRbacUserRoleByIDCount(id int64) (int64, error) {
-	return GetRbacUserRoleByIDCount(repo.db, id)
-}
-
 // GetRbacUserRoleByUserIDRoleID возвращает одну запись по индексу 'rbac_user_roles_unique'.
 func (repo *RbacUserRoleRepository) GetRbacUserRoleByUserIDRoleID(userID int64, roleID int64) (*RbacUserRole, error) {
 	return GetRbacUserRoleByUserIDRoleID(repo.db, userID, roleID)
-}
-
-// GetRbacUserRoleByUserIDRoleIDCount возвращает количество записей по индексу 'rbac_user_roles_unique'.
-func (repo *RbacUserRoleRepository) GetRbacUserRoleByUserIDRoleIDCount(userID int64, roleID int64) (int64, error) {
-	return GetRbacUserRoleByUserIDRoleIDCount(repo.db, userID, roleID)
 }
 
 // GetRbacUserRoleByRoleID runs a custom query, returning results as RbacUserRole.

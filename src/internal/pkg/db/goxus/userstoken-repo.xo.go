@@ -17,9 +17,7 @@ type IUsersTokenRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*UsersToken, error)
 	GetUsersTokenByID(id int64) (*UsersToken, error)
-	GetUsersTokenByIDCount(id int64) (int64, error)
 	GetUsersTokenByToken(token string) (*UsersToken, error)
-	GetUsersTokenByTokenCount(token string) (int64, error)
 	FindAllUsersTokensByUserID(userID int64) ([]*UsersToken, error)
 	FindAllUsersTokensByUserIDWithPagination(userID int64, limit, offset int) ([]*UsersToken, error)
 	FindAllUsersTokensByUserIDCount(userID int64) (int64, error)
@@ -86,19 +84,9 @@ func (repo *UsersTokenRepository) GetUsersTokenByID(id int64) (*UsersToken, erro
 	return GetUsersTokenByID(repo.db, id)
 }
 
-// GetUsersTokenByIDCount возвращает количество записей по индексу 'users_tokens_pk'.
-func (repo *UsersTokenRepository) GetUsersTokenByIDCount(id int64) (int64, error) {
-	return GetUsersTokenByIDCount(repo.db, id)
-}
-
 // GetUsersTokenByToken возвращает одну запись по индексу 'users_tokens_token_uindex'.
 func (repo *UsersTokenRepository) GetUsersTokenByToken(token string) (*UsersToken, error) {
 	return GetUsersTokenByToken(repo.db, token)
-}
-
-// GetUsersTokenByTokenCount возвращает количество записей по индексу 'users_tokens_token_uindex'.
-func (repo *UsersTokenRepository) GetUsersTokenByTokenCount(token string) (int64, error) {
-	return GetUsersTokenByTokenCount(repo.db, token)
 }
 
 // FindAllUsersTokensByUserID возвращает все записи по индексу 'users_tokens_user_id_index'.

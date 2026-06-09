@@ -17,7 +17,6 @@ type ISchemaMigrationRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*SchemaMigration, error)
 	GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error)
-	GetSchemaMigrationByVersionCount(version int64) (int64, error)
 }
 
 // Save saves the SchemaMigration to the database.
@@ -78,9 +77,4 @@ func (repo *SchemaMigrationRepository) GetLastID() (*SchemaMigration, error) {
 // GetSchemaMigrationByVersion возвращает одну запись по индексу 'schema_migrations_pkey'.
 func (repo *SchemaMigrationRepository) GetSchemaMigrationByVersion(version int64) (*SchemaMigration, error) {
 	return GetSchemaMigrationByVersion(repo.db, version)
-}
-
-// GetSchemaMigrationByVersionCount возвращает количество записей по индексу 'schema_migrations_pkey'.
-func (repo *SchemaMigrationRepository) GetSchemaMigrationByVersionCount(version int64) (int64, error) {
-	return GetSchemaMigrationByVersionCount(repo.db, version)
 }

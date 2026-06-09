@@ -17,7 +17,6 @@ type ISettingRepository interface {
 	GetBySQLCount(sqlstr string, args ...any) (int64, error)
 	GetLastID() (*Setting, error)
 	GetSettingByID(id int64) (*Setting, error)
-	GetSettingByIDCount(id int64) (int64, error)
 }
 
 // Save saves the Setting to the database.
@@ -78,9 +77,4 @@ func (repo *SettingRepository) GetLastID() (*Setting, error) {
 // GetSettingByID возвращает одну запись по индексу 'settings_pk'.
 func (repo *SettingRepository) GetSettingByID(id int64) (*Setting, error) {
 	return GetSettingByID(repo.db, id)
-}
-
-// GetSettingByIDCount возвращает количество записей по индексу 'settings_pk'.
-func (repo *SettingRepository) GetSettingByIDCount(id int64) (int64, error) {
-	return GetSettingByIDCount(repo.db, id)
 }
