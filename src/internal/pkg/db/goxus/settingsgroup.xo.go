@@ -20,14 +20,10 @@ type SettingsGroup struct {
 	Description sql.NullString `json:"description"` // description
 	OrderPos    int64          `json:"order_pos"`   // order_pos
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the SettingsGroup exists in the database.
 func (sg *SettingsGroup) Exists() bool {
 	return sg._exists
@@ -43,9 +39,6 @@ func (sg *SettingsGroup) Deleted() bool {
 	return sg._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the SettingsGroup to the database.
 func (sg *SettingsGroup) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -83,10 +76,6 @@ $1, $2, $3
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the SettingsGroup in the database.
 func (sg *SettingsGroup) Update(db pgxdb.DBQuery) error {
@@ -177,9 +166,6 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.description, EXCLUDED.order_pos
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the SettingsGroup from the database.
 func (sg *SettingsGroup) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -220,8 +206,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllSettingsGroup returns all rows from 'public.settings_groups',
 func GetAllSettingsGroup(db pgxdb.DBQuery) ([]*SettingsGroup, error) {
 	ctx := context.Background()
@@ -256,9 +240,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		sg.SetExists(true)
-		// @end-crud
 
 		res = append(res, &sg)
 	}
@@ -301,9 +283,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		sg.SetExists(true)
-		// @end-crud
 
 		res = append(res, &sg)
 	}
@@ -447,10 +427,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	sg._exists = true
 	sg._deleted = false
-	// @end-crud
 
 	return &sg, nil
 }

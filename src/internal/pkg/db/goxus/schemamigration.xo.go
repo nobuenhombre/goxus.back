@@ -17,14 +17,10 @@ type SchemaMigration struct {
 	Version int64 `json:"version"` // version
 	Dirty   bool  `json:"dirty"`   // dirty
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the SchemaMigration exists in the database.
 func (sm *SchemaMigration) Exists() bool {
 	return sm._exists
@@ -40,9 +36,6 @@ func (sm *SchemaMigration) Deleted() bool {
 	return sm._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the SchemaMigration to the database.
 func (sm *SchemaMigration) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -80,10 +73,6 @@ $1, $2
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the SchemaMigration in the database.
 func (sm *SchemaMigration) Update(db pgxdb.DBQuery) error {
@@ -174,9 +163,6 @@ EXCLUDED.version, EXCLUDED.dirty
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the SchemaMigration from the database.
 func (sm *SchemaMigration) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -217,8 +203,6 @@ WHERE version = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllSchemaMigration returns all rows from 'public.schema_migrations',
 func GetAllSchemaMigration(db pgxdb.DBQuery) ([]*SchemaMigration, error) {
 	ctx := context.Background()
@@ -253,9 +237,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		sm.SetExists(true)
-		// @end-crud
 
 		res = append(res, &sm)
 	}
@@ -298,9 +280,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		sm.SetExists(true)
-		// @end-crud
 
 		res = append(res, &sm)
 	}
@@ -444,10 +424,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	sm._exists = true
 	sm._deleted = false
-	// @end-crud
 
 	return &sm, nil
 }

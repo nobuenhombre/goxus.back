@@ -20,14 +20,10 @@ type RbacUserRole struct {
 	CreatedAt time.Time `json:"created_at"` // created_at
 	UpdatedAt time.Time `json:"updated_at"` // updated_at
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the RbacUserRole exists in the database.
 func (rur *RbacUserRole) Exists() bool {
 	return rur._exists
@@ -43,9 +39,6 @@ func (rur *RbacUserRole) Deleted() bool {
 	return rur._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the RbacUserRole to the database.
 func (rur *RbacUserRole) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -83,10 +76,6 @@ $1, $2, $3, $4
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the RbacUserRole in the database.
 func (rur *RbacUserRole) Update(db pgxdb.DBQuery) error {
@@ -177,9 +166,6 @@ EXCLUDED.id, EXCLUDED.user_id, EXCLUDED.role_id, EXCLUDED.created_at, EXCLUDED.u
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the RbacUserRole from the database.
 func (rur *RbacUserRole) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -220,8 +206,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllRbacUserRole returns all rows from 'public.rbac_user_roles',
 func GetAllRbacUserRole(db pgxdb.DBQuery) ([]*RbacUserRole, error) {
 	ctx := context.Background()
@@ -256,9 +240,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rur.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rur)
 	}
@@ -301,9 +283,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rur.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rur)
 	}
@@ -447,10 +427,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	rur._exists = true
 	rur._deleted = false
-	// @end-crud
 
 	return &rur, nil
 }

@@ -20,14 +20,10 @@ type RbacRole struct {
 	CreatedAt time.Time `json:"created_at"` // created_at
 	UpdatedAt time.Time `json:"updated_at"` // updated_at
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the RbacRole exists in the database.
 func (rr *RbacRole) Exists() bool {
 	return rr._exists
@@ -43,9 +39,6 @@ func (rr *RbacRole) Deleted() bool {
 	return rr._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the RbacRole to the database.
 func (rr *RbacRole) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -83,10 +76,6 @@ $1, $2, $3, $4
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the RbacRole in the database.
 func (rr *RbacRole) Update(db pgxdb.DBQuery) error {
@@ -177,9 +166,6 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.slug, EXCLUDED.created_at, EXCLUDED.updated
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the RbacRole from the database.
 func (rr *RbacRole) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -220,8 +206,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllRbacRole returns all rows from 'public.rbac_roles',
 func GetAllRbacRole(db pgxdb.DBQuery) ([]*RbacRole, error) {
 	ctx := context.Background()
@@ -256,9 +240,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rr.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rr)
 	}
@@ -301,9 +283,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rr.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rr)
 	}
@@ -447,10 +427,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	rr._exists = true
 	rr._deleted = false
-	// @end-crud
 
 	return &rr, nil
 }

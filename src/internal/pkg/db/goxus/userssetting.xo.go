@@ -19,14 +19,10 @@ type UsersSetting struct {
 	SettingsID int64 `json:"settings_id"` // settings_id
 	Value      JSON  `json:"value"`       // value
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the UsersSetting exists in the database.
 func (us *UsersSetting) Exists() bool {
 	return us._exists
@@ -42,9 +38,6 @@ func (us *UsersSetting) Deleted() bool {
 	return us._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the UsersSetting to the database.
 func (us *UsersSetting) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -82,10 +75,6 @@ $1, $2, $3
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the UsersSetting in the database.
 func (us *UsersSetting) Update(db pgxdb.DBQuery) error {
@@ -176,9 +165,6 @@ EXCLUDED.id, EXCLUDED.user_id, EXCLUDED.settings_id, EXCLUDED.value
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the UsersSetting from the database.
 func (us *UsersSetting) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -219,8 +205,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllUsersSetting returns all rows from 'public.users_settings',
 func GetAllUsersSetting(db pgxdb.DBQuery) ([]*UsersSetting, error) {
 	ctx := context.Background()
@@ -255,9 +239,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		us.SetExists(true)
-		// @end-crud
 
 		res = append(res, &us)
 	}
@@ -300,9 +282,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		us.SetExists(true)
-		// @end-crud
 
 		res = append(res, &us)
 	}
@@ -446,10 +426,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	us._exists = true
 	us._deleted = false
-	// @end-crud
 
 	return &us, nil
 }

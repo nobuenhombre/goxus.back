@@ -19,14 +19,10 @@ type SettingsType struct {
 	Name        string         `json:"name"`        // name
 	Description sql.NullString `json:"description"` // description
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the SettingsType exists in the database.
 func (st *SettingsType) Exists() bool {
 	return st._exists
@@ -42,9 +38,6 @@ func (st *SettingsType) Deleted() bool {
 	return st._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the SettingsType to the database.
 func (st *SettingsType) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -82,10 +75,6 @@ $1, $2
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the SettingsType in the database.
 func (st *SettingsType) Update(db pgxdb.DBQuery) error {
@@ -176,9 +165,6 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.description
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the SettingsType from the database.
 func (st *SettingsType) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -219,8 +205,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllSettingsType returns all rows from 'public.settings_types',
 func GetAllSettingsType(db pgxdb.DBQuery) ([]*SettingsType, error) {
 	ctx := context.Background()
@@ -255,9 +239,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		st.SetExists(true)
-		// @end-crud
 
 		res = append(res, &st)
 	}
@@ -300,9 +282,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		st.SetExists(true)
-		// @end-crud
 
 		res = append(res, &st)
 	}
@@ -446,10 +426,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	st._exists = true
 	st._deleted = false
-	// @end-crud
 
 	return &st, nil
 }

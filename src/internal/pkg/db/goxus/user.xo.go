@@ -24,14 +24,10 @@ type User struct {
 	UpdatedAt       time.Time   `json:"updated_at"`        // updated_at
 	DeletedAt       pq.NullTime `json:"deleted_at"`        // deleted_at
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the User exists in the database.
 func (u *User) Exists() bool {
 	return u._exists
@@ -47,9 +43,6 @@ func (u *User) Deleted() bool {
 	return u._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the User to the database.
 func (u *User) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -87,10 +80,6 @@ $1, $2, $3, $4, $5, $6, $7
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the User in the database.
 func (u *User) Update(db pgxdb.DBQuery) error {
@@ -181,9 +170,6 @@ EXCLUDED.id, EXCLUDED.name, EXCLUDED.email, EXCLUDED.password, EXCLUDED.email_ve
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the User from the database.
 func (u *User) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -224,8 +210,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllUser returns all rows from 'public.users',
 func GetAllUser(db pgxdb.DBQuery) ([]*User, error) {
 	ctx := context.Background()
@@ -260,9 +244,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		u.SetExists(true)
-		// @end-crud
 
 		res = append(res, &u)
 	}
@@ -305,9 +287,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		u.SetExists(true)
-		// @end-crud
 
 		res = append(res, &u)
 	}
@@ -451,10 +431,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	u._exists = true
 	u._deleted = false
-	// @end-crud
 
 	return &u, nil
 }

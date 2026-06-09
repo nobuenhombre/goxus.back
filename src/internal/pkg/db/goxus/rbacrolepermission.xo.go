@@ -20,14 +20,10 @@ type RbacRolePermission struct {
 	CreatedAt    time.Time `json:"created_at"`    // created_at
 	UpdatedAt    time.Time `json:"updated_at"`    // updated_at
 
-	// @crud
 	// xo fields
 	_exists, _deleted bool
-	// @end-crud
-
 }
 
-// @crud
 // Exists determines if the RbacRolePermission exists in the database.
 func (rrp *RbacRolePermission) Exists() bool {
 	return rrp._exists
@@ -43,9 +39,6 @@ func (rrp *RbacRolePermission) Deleted() bool {
 	return rrp._deleted
 }
 
-// @end-crud
-
-// @crud
 // Insert inserts the RbacRolePermission to the database.
 func (rrp *RbacRolePermission) Insert(db pgxdb.DBQuery) error {
 	var err error
@@ -83,10 +76,6 @@ $1, $2, $3, $4
 
 	return nil
 }
-
-// @end-crud
-
-// @crud
 
 // Update updates the RbacRolePermission in the database.
 func (rrp *RbacRolePermission) Update(db pgxdb.DBQuery) error {
@@ -177,9 +166,6 @@ EXCLUDED.id, EXCLUDED.role_id, EXCLUDED.permission_id, EXCLUDED.created_at, EXCL
 	return nil
 }
 
-// @end-crud
-
-// @crud
 // Delete deletes the RbacRolePermission from the database.
 func (rrp *RbacRolePermission) Delete(db pgxdb.DBQuery) error {
 	var err error
@@ -220,8 +206,6 @@ WHERE id = $1
 	return nil
 }
 
-// @end-crud
-
 // GetAllRbacRolePermission returns all rows from 'public.rbac_role_permissions',
 func GetAllRbacRolePermission(db pgxdb.DBQuery) ([]*RbacRolePermission, error) {
 	ctx := context.Background()
@@ -256,9 +240,7 @@ ORDER BY
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rrp.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rrp)
 	}
@@ -301,9 +283,7 @@ LIMIT $1 OFFSET $2
 		if err != nil {
 			return nil, err
 		}
-		// @crud
 		rrp.SetExists(true)
-		// @end-crud
 
 		res = append(res, &rrp)
 	}
@@ -447,10 +427,8 @@ LIMIT 1
 	if err != nil {
 		return nil, err
 	}
-	// @crud
 	rrp._exists = true
 	rrp._deleted = false
-	// @end-crud
 
 	return &rrp, nil
 }
