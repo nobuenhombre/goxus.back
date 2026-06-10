@@ -8,4 +8,4 @@ YAML="$1"
 eval "$(parseYAML "${YAML}")"
 CS="$(postgresqlConnectString "postgres" "${config_db_user}" "${config_db_pass}" "${config_db_host}" "${config_db_port}" "${config_db_name}" "${config_db_sslmode}")"
 
-migrate -path "$SCRIPT_DIR/goxus/migrations" -database "${CS}" down 1
+migrate -path "$SCRIPT_DIR/${config_db_name}/migrations" -database "${CS}" down 1
